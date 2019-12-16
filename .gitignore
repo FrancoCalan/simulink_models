@@ -1,0 +1,14 @@
+*.log
+*.pyc
+*.swp
+*.autosave
+*.tar.gz
+*.json
+*.pdf
+*.png
+*.npz
+*/ROACH1/*/
+*/ROACH2/*/
+!*/ROACH1/bof/
+!*/ROACH2/bof/
+*calibrations*

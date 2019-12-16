@@ -1,0 +1,6 @@
+#!/bin/bash
+rubypath=/home/franco/Workspace/roach_tools/externals/adc16_init_cal/adc16_test/src/bin/
+#ruby $rubypath/adc16_init.rb --demux 2 192.168.1.13 mbf_16beams.bof.gz
+ruby $rubypath/adc16_init.rb --demux 2 192.168.1.13 mbf_64beams.bof.gz
+sshpass -p roach ssh pi@192.168.1.14 '(python init_mixers.py)'
+sleep 1
