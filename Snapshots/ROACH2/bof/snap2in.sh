@@ -1,17 +1,8 @@
 #!/bin/sh
-IP="192.168.1.12"
-BOF="snap2in.bof.gz"
-RVER=2
-ADCSNAP="adcsnap"
-NSNAPSHOTS=2
-DTYPE=">i1"
-NSAMPLES=200
-
 plot_snapshots.py \
-    --ip   $IP \
-    --bof  $BOF \
-    --rver $RVER \
-    -sn    $ADCSNAP \
-    -ns    $NSNAPSHOTS \
-    -dt    $DTYPE \
-    -sa    $NSAMPLES
+    --ip         192.168.1.12 \
+    --bof        snap2in.bof.gz \
+    --rver       2 \
+    --snapnames  adcsnap0 adcsnap1 \
+    --dtype      ">i1" \
+    --nsamples   200
