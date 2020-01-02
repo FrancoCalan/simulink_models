@@ -12,11 +12,12 @@ from matplotlib.animation import FuncAnimation
 # communication parameters
 roach_ip = '192.168.1.11'
 roach_port = 7147
-boffile = 'corr2in_1024ch_500mhz.bof'
+#boffile = 'corr2in_1024ch_500mhz.bof'
+boffile = 'dss_1024ch_500mhz.bof'
 program_bof = True
 
 # model parameters
-snap_data_type = '>u8'
+snap_data_type = '>i1'
 snapshots      = ['adcsnap0', 'adcsnap1']
 
 # experiment parameters
@@ -55,7 +56,7 @@ def main():
     #####################
     def animate(_):
         # get snapshot data
-        snapdata_list = read_snapshots(roach, snapnames, snap_data_type)
+        snapdata_list = read_snapshots(roach, snapshots, snap_data_type)
         for line, snapdata in zip(lines, snapdata_list):
             line.set_data(range(nsamples), snapdata[:nsamples])
         return lines
