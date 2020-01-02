@@ -438,7 +438,7 @@ def compress_data():
 
 class SimulatedInstrument():
     """
-    Class used to simlate an SCPI instrument. Useful when you need to run the
+    Class used to simulate an SCPI instrument. Useful when you need to run the
     code but you don't want/can't connect to instruments.
     """
     def __init__(self, ip):
