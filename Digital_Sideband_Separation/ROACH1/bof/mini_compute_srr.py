@@ -79,7 +79,7 @@ def main():
     print("done")
     
     if program_bof:
-        print("Programming boffile in ROACH...")
+        print("Programming boffile " + boffile + " into ROACH...")
         roach.progdev(boffile)
     try:
         fpga_clock = roach.est_brd_clk()
