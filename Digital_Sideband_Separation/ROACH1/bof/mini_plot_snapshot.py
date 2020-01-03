@@ -12,8 +12,10 @@ from matplotlib.animation import FuncAnimation
 # communication parameters
 roach_ip = '192.168.1.11'
 roach_port = 7147
-#boffile = 'corr2in_1024ch_500mhz.bof'
-boffile = 'dss_1024ch_500mhz.bof'
+boffile = 'corr2in_1024ch_500mhz.bof'
+#boffile = 'dss_1024ch_500mhz.bof'
+#boffile = 'snap2in.bof'
+#boffile = 'spec2in_4096ch_500mhz.bof'
 program_bof = True
 
 # model parameters
