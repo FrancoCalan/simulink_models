@@ -18,7 +18,7 @@ program_bof = True
 
 # model parameters
 adc_bits = 8
-adc_freq = 480 # MHz
+bandwidth = 480 # MHz
 acc_len_reg = 'acc_len'
 cnt_rst_reg = 'cnt_rst'
 bram_addr_width = 8  # bits
@@ -33,7 +33,7 @@ acc_len = 2**16
 # derivative parameters
 nbrams    = len(bram_a2)
 nchannels = 2**bram_addr_width * nbrams
-freqs     = np.linspace(0, adc_freq, nchannels, endpoint=False)
+freqs     = np.linspace(0, bandwidth, nchannels, endpoint=False)
 dBFS      = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 specbrams_list = [bram_a2, bram_b2]
 
@@ -42,7 +42,7 @@ specbrams_list = [bram_a2, bram_b2]
 ##########################
 def main():
     print("Setting up plotting and data saving elements...")
-    fig, lines = create_figure(2, adc_freq, dBFS)
+    fig, lines = create_figure(2, bandwidth, dBFS)
     print("done")
 
     print("Initializing ROACH communication...")

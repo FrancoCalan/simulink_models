@@ -20,7 +20,7 @@ simulate_instruments = False
 
 # model parameters
 adc_bits = 8
-adc_freq = 500 # MHz
+bandwidth = 500 # MHz
 acc_len_reg = 'acc_len'
 cnt_rst_reg = 'cnt_rst'
 bram_addr_width = 8  # bits
@@ -47,15 +47,14 @@ chnl_step = 8
 #rf_power = -10 # dBm
 date_time =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir = "mini_dss_test_srr " + date_time
-caldir  = "mini_dss_test_cal 2020-01-03 17:24:25.tar.gz"
-pause_time = 0.6 # should be > (1/adc_freq * FFT_size * acc_len * 2) in order 
+pause_time = 0.6 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                  # for the spectra to be fully computed after a tone change
 do_ideal      = True
 do_calibrated = True
 
 # derivative parameters
 n_channels = 2**bram_addr_width * len(bram_a2)
-if_freqs = np.linspace(0, adc_freq, n_channels, endpoint=False)
+if_freqs = np.linspace(0, bandwidth, n_channels, endpoint=False)
 test_channels = range(1, n_channels, chnl_step)
 if_test_freqs = if_freqs[test_channels]
 
@@ -160,7 +159,7 @@ def create_figure():
     fig, [[ax0, ax1], [ax2, ax3]] = plt.subplots(2,2)
 
     # set spectrometers axes
-    ax0.set_xlim((0, adc_freq))      ; ax1.set_xlim((0, adc_freq))
+    ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
     ax0.set_ylim((0, 80))            ; ax1.set_ylim((0, 80))
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
@@ -168,7 +167,7 @@ def create_figure():
     ax0.set_title("In0 spec")        ; ax1.set_title("In1 spec")
 
     # SRR axes
-    ax2.set_xlim((0, adc_freq))      ; ax3.set_xlim((0, adc_freq))
+    ax2.set_xlim((0, bandwidth))     ; ax3.set_xlim((0, bandwidth))
     ax2.set_ylim((0, 80))            ; ax3.set_ylim((0, 80))
     ax2.grid()                       ; ax3.grid()
     ax2.set_xlabel('Frequency [MHz]'); ax3.set_xlabel('Frequency [MHz]')
@@ -196,7 +195,7 @@ def make_data_directory():
     with open(datadir + "/testinfo.txt", "w") as f:
         f.write("date time:    " + date_time       + "\n")
         f.write("boffile:      " + boffile         + "\n")
-        f.write("adc freq:     " + str(adc_freq)   + "\n")
+        f.write("bandwidth:    " + str(bandwidth)  + "\n")
         f.write("lo freq:      " + str(lo_freq)    + "\n")
         f.write("n channels:   " + str(n_channels) + "\n")
         f.write("acc len:      " + str(acc_len)    + "\n")
