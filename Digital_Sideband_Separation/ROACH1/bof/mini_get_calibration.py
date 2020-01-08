@@ -11,35 +11,36 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # communication parameters
-roach_ip = '192.168.1.11'
+roach_ip = '192.168.1.10'
 roach_port = 7147
 boffile = 'corr2in_1024ch_500mhz.bof'
 program_bof = True
-rf_generator_ip = '192.168.1.34'
+rf_generator_ip = '192.168.1.31'
 simulate_instruments = False
 
 # model parameters
 adc_bits = 8
-adc_freq = 480 # MHz
+adc_freq = 500 # MHz
 acc_len_reg = 'acc_len'
 cnt_rst_reg = 'cnt_rst'
 bram_addr_width = 8  # bits
 bram_word_width = 64 # bits
 pow_data_type      = '>u8'
 crosspow_data_type = '>i8'
-bram_a2    = ['dout_a2_0', 'dout_a2_1', 'dout_a2_2', 'dout_a2_3']
-bram_b2    = ['dout_b2_0', 'dout_b2_1', 'dout_b2_2', 'dout_b2_3']
-bram_ab_re = ['dout_ab_re0', 'dout_ab_re1', 'dout_ab_re2', 'dout_ab_re3']
-bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3']
+bram_a2    = ['a2_0', 'a2_1', 'a2_2', 'a2_3']
+bram_b2    = ['b2_0', 'b2_1', 'b2_2', 'b2_3']
+bram_ab_re = ['ab_re0', 'ab_re1', 'ab_re2', 'ab_re3']
+bram_ab_im = ['ab_im0', 'ab_im1', 'ab_im2', 'ab_im3']
 
 # experiment parameters
-lo_freq = 3000 # MHz
+#lo_freq = 3000 # MHz
+lo_freq = 115271.2018 - 250 
 acc_len = 2**16
 chnl_step = 8
-rf_power = -10 # dBm
+#rf_power = 19 # dBm
 date_time =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir = "mini_dss_test_cal " + date_time
-pause_time = 0.3 # should be > (1/adc_freq * FFT_size * acc_len * 2) in order 
+pause_time = 0.6 # should be > (1/adc_freq * FFT_size * acc_len * 2) in order 
                  # for the spectra to be fully computed after a tone change
 
 # derivative parameters
@@ -107,10 +108,10 @@ def main():
     roach.write_int(cnt_rst_reg, 0)
     print("done")
 
-    print("Setting instrumets power and outputs...")
-    rf_generator.write("power " + str(rf_power))
-    rf_generator.write("outp on")
-    print("done")
+    #print("Setting instrumets power and outputs...")
+    #rf_generator.write("power " + str(rf_power))
+    #rf_generator.write("outp on")
+    #print("done")
 
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
@@ -124,9 +125,9 @@ def main():
     a2_lsb, b2_lsb, ab_lsb = get_caldata(rf_freqs, "lsb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
 
-    print("Turning off intruments...")
-    rf_generator.write("outp off")
-    print("done")
+    #print("Turning off intruments...")
+    #rf_generator.write("outp off")
+    #print("done")
 
     print("Saving data...")
     np.savez(datadir+"/caldata", 

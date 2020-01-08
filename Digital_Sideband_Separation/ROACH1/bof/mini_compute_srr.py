@@ -11,16 +11,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # communication parameters
-roach_ip = '192.168.1.11'
+roach_ip = '192.168.1.10'
 roach_port = 7147
 boffile = 'dss_1024ch_500mhz.bof'
 program_bof = True
-rf_generator_ip = '192.168.1.34'
+rf_generator_ip = '192.168.1.31'
 simulate_instruments = False
 
 # model parameters
 adc_bits = 8
-adc_freq = 480 # MHz
+adc_freq = 500 # MHz
 acc_len_reg = 'acc_len'
 cnt_rst_reg = 'cnt_rst'
 bram_addr_width = 8  # bits
@@ -40,14 +40,15 @@ bram_consts_b_im = ['const_b0_bram_im', 'const_b1_bram_im',
                     'const_b2_bram_im', 'const_b3_bram_im']
 
 # experiment parameters
-lo_freq = 3000 # MHz
+#lo_freq = 3000 # MHz
+lo_freq = 115271.2018 - 250 
 acc_len = 2**16
 chnl_step = 8
-rf_power = -10 # dBm
+#rf_power = -10 # dBm
 date_time =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir = "mini_dss_test_srr " + date_time
-caldir  = "mini_dss_test_cal 2019-12-12 11:03:02.tar.gz"
-pause_time = 0.3 # should be > (1/adc_freq * FFT_size * acc_len * 2) in order 
+caldir  = "mini_dss_test_cal 2020-01-03 17:24:25.tar.gz"
+pause_time = 0.6 # should be > (1/adc_freq * FFT_size * acc_len * 2) in order 
                  # for the spectra to be fully computed after a tone change
 do_ideal      = True
 do_calibrated = True
@@ -117,10 +118,10 @@ def main():
     roach.write_int(cnt_rst_reg, 0)
     print("done")
 
-    print("Setting instrumets power and outputs...")
-    rf_generator.write("power " + str(rf_power))
-    rf_generator.write("outp on")
-    print("done")
+    #print("Setting instrumets power and outputs...")
+    #rf_generator.write("power " + str(rf_power))
+    #rf_generator.write("outp on")
+    #print("done")
 
     if do_ideal:
         print("Computing SRR for ideal constants...")
@@ -138,9 +139,9 @@ def main():
         compute_srr(consts_a, consts_b, "cal")
         print("done")
         
-    print("Turning off intruments...")
-    rf_generator.write("outp off")
-    print("done")
+    #print("Turning off intruments...")
+    #rf_generator.write("outp off")
+    #print("done")
 
     print("Printing data...")
     print_data()
