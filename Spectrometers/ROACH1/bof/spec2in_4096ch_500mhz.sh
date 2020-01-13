@@ -6,7 +6,6 @@ plot_spectra.py \
     --bramnames dout0_0 dout0_1 dout0_2 dout0_3 \
                 dout1_0 dout1_1 dout1_2 dout1_3 \
     --nspecs    2 \
-    --dtype     ">u8" \
     --addrwidth 9 \
     --datawidth 64 \
     --bandwidth 480 \

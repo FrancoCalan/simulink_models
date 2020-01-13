@@ -8,7 +8,6 @@ plot_spectra.py \
                 dout_1a_0 dout_1a_1 dout_1a_2 dout_1a_3 \
                 dout_1c_0 dout_1c_1 dout_1c_2 dout_1c_3 \
     --nspecs    4 \
-    --dtype     ">u8" \
     --addrwidth 9 \
     --datawidth 64 \
     --bandwidth 600 \
