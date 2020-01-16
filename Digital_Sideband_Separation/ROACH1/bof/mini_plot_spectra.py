@@ -1,6 +1,6 @@
-# Independent script for spectra animated plotting in mini  .
+# Independent script for spectra animated plotting in mini.
 #
-# Author: Franco Curotto. }January 2020
+# Author: Franco Curotto. January 2020
 # email: francocurotto@gmail.com
 
 # imports
