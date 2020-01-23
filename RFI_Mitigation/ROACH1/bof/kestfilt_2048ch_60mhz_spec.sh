@@ -2,7 +2,6 @@
 plot_spectra.py \
     --ip        192.168.1.11 \
     --bof       kestfilt_2048ch_60mhz.bof \
-    --rver      1 \
     --bramnames dout0_0 dout1_0\
     --nspecs    2 \
     --dtype     ">u8" \
