@@ -2,7 +2,7 @@
 plot_spectra.py \
     --ip        192.168.1.12 \
     --bof       dec_test.bof.gz \
-    --rver      2 \
+    --upload     \
     --bramnames dout0_0 dout0_1 \
     --nspecs    2 \
     --dtype     ">u8" \
