@@ -5,14 +5,14 @@ Repository with the Simulink models developed by the Digital Group of the Millim
 ## TODO
 
 calandigital'ed projects:
-- [ ] ADC Frequency Calibration
 - [ ] Digital OMT
-- [ ] Digital Sideband Separation / Balance Mixer
+- [ ] Digital Sideband Separation
+- [ ] Balance Mixer
 - [ ] DRAM
 - [ ] Million Channels Spectrometer
 - [x] Multi Beam Former
 - [x] Pocket Correlator
-- [ ] RFI Mitigation
+- [ ] RFI Mitigation / ADC Frequency Calibration
 - [x] Snapshots
 - [x] Spectrometers
 - [ ] Tests

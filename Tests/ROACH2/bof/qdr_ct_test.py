@@ -3,14 +3,13 @@ import corr, qdr
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
-import calandigital.qdr as qdr
 
 def main():
     # initialize
     fpga = cd.initialize_roach('192.168.1.12', 'qdr_ct_test.bof.gz', uopload=True)
         
     # calibrate qdr
-    my_qdr = qdr.Qdr(fpga, 'qdr0')
+    my_qdr = cd.Qdr(fpga, 'qdr0')
     my_qdr.qdr_cal(fail_hard=True, verbosity=1)
     time.sleep(0.1)
     
