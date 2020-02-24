@@ -8,11 +8,11 @@ calandigital'ed projects:
 - [ ] Digital OMT
 - [ ] Digital Sideband Separation
 - [ ] Balance Mixer
-- [ ] DRAM
+- [x] DRAM
 - [ ] Million Channels Spectrometer
 - [x] Multi Beam Former
 - [x] Pocket Correlator
 - [ ] RFI Mitigation / ADC Frequency Calibration
 - [x] Snapshots
 - [x] Spectrometers
-- [ ] Tests
+- [x] Tests
