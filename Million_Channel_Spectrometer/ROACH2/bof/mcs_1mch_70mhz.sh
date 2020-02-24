@@ -1,10 +1,10 @@
 #!/bin/sh
 plot_spectra.py \
     --ip        192.168.1.15 \
-    --bof       dec_test.bof.gz \
+    --bof       mcs_1mch_70mhz.bof.gz \
     --upload     \
-    --bramnames dout0_0 dout0_1 \
-    --nspecs    2 \
+    --bramnames dout0_0 \
+    --nspecs    1 \
     --addrwidth 8 \
     --datawidth 64 \
     --bandwidth 1080 \
