@@ -7,7 +7,7 @@ import calandigital as cd
 
 def main():
     # initialize
-    fpga = cd.initialize_roach('192.168.1.12', boffile='qdr_ct_test2.bof.gz', upload=True)
+    fpga = cd.initialize_roach('192.168.1.12', boffile='qdr_ct_test.bof.gz', upload=True)
         
     # calibrate qdr
     my_qdr = cd.Qdr(fpga, 'qdr0')
