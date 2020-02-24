@@ -1,12 +1,13 @@
 import time
-import corr, qdr
+import corr
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 import calandigital as cd
 
 def main():
     # initialize
-    fpga = cd.initialize_roach('192.168.1.12', 'qdr_ct_test.bof.gz', uopload=True)
+    fpga = cd.initialize_roach('192.168.1.12', boffile='qdr_ct_test2.bof.gz', upload=True)
         
     # calibrate qdr
     my_qdr = cd.Qdr(fpga, 'qdr0')
@@ -23,8 +24,8 @@ def main():
     # create figure
     fig, line_orig, line_tran = create_figure()
     
-    # check data in loop
-    while True:
+    # animation definition
+    def animate(_):
         # get data
         orig_data = np.frombuffer(fpga.read('original' , (2**8)*(2**8)*4, 0), dtype='>u4')
         tran_data = np.frombuffer(fpga.read('transpose', (2**8)*(2**8)*4, 0), dtype='>u4')
@@ -38,10 +39,13 @@ def main():
             print(check_data)
 
         # plot data
-        line_orig.set_data(range(2**8), orig_data)
-        line_tran.set_data(range(2**8), tran_data)
-        fig.canvas.draw()
+        line_orig.set_data(range(2**16), orig_data)
+        line_tran.set_data(range(2**16), tran_data)
 
+        return []
+
+    ani = FuncAnimation(fig, animate, blit=True)
+    plt.show()
 
 def create_check_data():
     rows  = 2**8    
@@ -57,14 +61,14 @@ def create_figure():
     fig.show()
     fig.canvas.draw()
 
-    ax.set_xlim((0, 2**8))
-    ax.set_ylim((0, 2**8))
+    line_orig, = ax.plot([], [], '-', label='original')
+    line_tran, = ax.plot([], [], '-', label='transpose')
+
+    ax.set_xlim((0, 2**16))
+    ax.set_ylim((0, 2**16))
     ax.set_title("Original vs Transpose")
     ax.grid()
     ax.legend()
-
-    line_orig = ax.plot([], [], '-', label='original')
-    line_tran = ax.plot([], [], '-', label='transpose')
 
     return fig, line_orig, line_tran
 
