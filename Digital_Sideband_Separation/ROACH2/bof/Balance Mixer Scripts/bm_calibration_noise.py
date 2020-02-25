@@ -35,7 +35,6 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
 # experiment parameters
 lo_freq    = 8000 # MHz
 acc_len    = 2**20
-chnl_step  = 8
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "bm_cal_noise " + date_time
 pause_time = 8.0 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
@@ -44,15 +43,13 @@ pause_time = 8.0 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_a2)
 if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False)
-test_channels = range(1, nchannels, chnl_step)
-if_test_freqs = if_freqs[test_channels]
 dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 
 ##########################
 # Experiment Starts Here #
 ##########################
 def main():
-    global fig, line0, line1, line2, line3, roach, rf_generator
+    global roach, rf_generator, fig, line0, line1, line2, line3
     start_time = time.time()
 
     roach = cd.initialize_roach(roach_ip)
@@ -75,10 +72,6 @@ def main():
     a2, b2, ab = get_caldata()
     print("done")
         
-    print("Turning off intruments...")
-    rf_generator.write("outp off")
-    print("done")
-
     print("Saving data...")
     np.savez(datadir+"/caldata", a2=a2, b2=b2, ab=ab)
     print("done")
@@ -103,7 +96,13 @@ def create_figure():
     fig.set_tight_layout(True)
     fig.show()
     fig.canvas.draw()
-
+    
+    # get line objects
+    line0, = ax0.plot([],[])
+    line1, = ax1.plot([],[])
+    line2, = ax2.plot([],[])
+    line3, = ax3.plot([],[])
+    
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
     ax0.set_ylim((-80, 0))           ; ax1.set_ylim((-80, 0))
@@ -126,12 +125,6 @@ def create_figure():
     ax3.set_xlabel('Frequency [MHz]')
     ax3.set_ylabel('Angle diff [degrees]')
 
-    # get line objects
-    line0, = ax0.plot([],[])
-    line1, = ax1.plot([],[])
-    line2, = ax2.plot([],[])
-    line3, = ax3.plot([],[])
-
     return fig, line0, line1, line2, line3
 
 def make_data_directory():
@@ -148,8 +141,7 @@ def make_data_directory():
         f.write("bandwidth:    " + str(bandwidth)  + "\n")
         f.write("lo freq:      " + str(lo_freq)    + "\n")
         f.write("nchannels:    " + str(nchannels)  + "\n")
-        f.write("acc len:      " + str(acc_len)    + "\n")
-        f.write("chnl step:    " + str(chnl_step))
+        f.write("acc len:      " + str(acc_len))
 
 def get_caldata():
     """
@@ -182,8 +174,8 @@ def get_caldata():
     # plot data
     line0.set_data(if_freqs, a2_plot)
     line1.set_data(if_freqs, b2_plot)
-    line2.set_data(if_test_freqs[:i+1], np.abs(ab_ratios))
-    line3.set_data(if_test_freqs[:i+1], np.angle(ab_ratios, deg=True))
+    line2.set_data(if_freqs, np.abs(ab_ratios))
+    line3.set_data(if_freqs, np.angle(ab_ratios, deg=True))
     fig.canvas.draw()
     fig.canvas.flush_events()
     

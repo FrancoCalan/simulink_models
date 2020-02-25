@@ -54,7 +54,7 @@ dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 # Experiment Starts Here #
 ##########################
 def main():
-    global fig, line0, line1, line2, line3, roach, rf_generator
+    global roach, rf_generator, fig, line0, line1, line2, line3
     start_time = time.time()
 
     roach = cd.initialize_roach(roach_ip)
@@ -119,7 +119,13 @@ def create_figure():
     fig.set_tight_layout(True)
     fig.show()
     fig.canvas.draw()
-
+    
+    # get line objects
+    line0, = ax0.plot([],[])
+    line1, = ax1.plot([],[])
+    line2, = ax2.plot([],[])
+    line3, = ax3.plot([],[])
+    
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
     ax0.set_ylim((-80, 0))           ; ax1.set_ylim((-80, 0))
@@ -141,12 +147,6 @@ def create_figure():
     ax3.grid()                 
     ax3.set_xlabel('Frequency [MHz]')
     ax3.set_ylabel('Angle diff [degrees]')
-
-    # get line objects
-    line0, = ax0.plot([],[])
-    line1, = ax1.plot([],[])
-    line2, = ax2.plot([],[])
-    line3, = ax3.plot([],[])
 
     return fig, line0, line1, line2, line3
 
