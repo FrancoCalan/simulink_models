@@ -2,6 +2,7 @@
 synchronize_adc5g.py \
     --ip             192.168.1.12 \
     --bof            corr2in_2048ch_1520mhz.bof.gz \
+    `#--upload` \
     --genip          192.168.1.34 \
     --genpow         -10 \
     --zdok0brams     dout_a2_0 dout_a2_1 dout_a2_2 dout_a2_3 \

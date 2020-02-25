@@ -2,7 +2,7 @@
 calibrate_adc5g.py \
     --ip         192.168.1.12 \
     --bof        dss_2048ch_1520mhz.bof.gz \
-    --upload \
+    `#--upload` \
     `#--genip      192.168.1.34` \
     --genfreq    10 \
     --genpow     -3 \
@@ -15,6 +15,6 @@ calibrate_adc5g.py \
     --load_inl \
     --plot_snap \
     --plot_spec \
-    --nsamples 200 \
-    --bandwidth 1080 \
-    --loaddir adc5gcal\ 2020-01-09\ 15:31:42
+    --nsamples   200 \
+    --bandwidth  1080 \
+    --loaddir    adc5gcal\ 2020-01-09\ 15:31:42
