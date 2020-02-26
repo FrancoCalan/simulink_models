@@ -2,7 +2,7 @@
 # model as for digital sideband separation. Computes the LO Noise Rejection by 
 # getting spectral data in a hot/cold test assuming an LO noise is present (it 
 # can be injected with a noise source for example), and the model is calibrated.
-# It then saves the  into a compress folder.
+# It then saves the results into a compress folder.
 
 # imports
 import os, corr, time, datetime, tarfile, shutil
@@ -31,7 +31,7 @@ bram_lo = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3',
 lo_freq     = 8000 # MHz
 acc_len     = 2**20
 date_time   =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-datadir     = "bm_lnr_noise " + date_time
+datadir     = "dbm_lnr_noise " + date_time
 pause_time  = 8.0 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                   # for the spectra to be fully computed after a tone change
 load_consts = True
@@ -62,7 +62,7 @@ def main():
     #####################
     # loading calibration constants
     if load_consts:
-        bm_load_constants(roach, load_ideal, 1+0j, caldir)
+        dbm_load_constants(roach, load_ideal, 1+0j, caldir)
 
     print("Setting and resetting registers...")
     roach.write_int(acc_len_reg, acc_len)
@@ -123,7 +123,7 @@ def create_figure():
     ax0.set_title("RF spec")         ; ax1.set_title("LO spec")
     az0.legend()                     ;ax1.legend()
 
-    # LNR axes
+    # LNR axis
     ax2.set_xlim((0, bandwidth))     
     ax2.set_ylim((0, 80))            
     ax2.grid()                       

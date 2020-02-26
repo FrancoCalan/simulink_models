@@ -39,7 +39,7 @@ acc_len    = 2**16
 chnl_step  = 8
 rf_power   = -10 #dBm
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-datadir    = "bm_cal_tone " + date_time
+datadir    = "dbm_cal_tone " + date_time
 pause_time = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                  # for the spectra to be fully computed after a tone change
 

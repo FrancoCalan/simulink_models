@@ -1,6 +1,6 @@
-# Script for LNR computation of digital balance mixer. It uses the same
-# model as for digital sideband separation. Computes the LO Noise Rejection
-# by sweeping a tone through th bandwidth of a calibrated model.
+# Script for SRR computation of digital sideband separating receiver. Computes 
+# the Sideband Rejection Ratio by sweeping a tone through the bandwidth of a 
+# calibrated model.
 # It then saves the results into a compress folder.
 
 # imports
@@ -8,7 +8,7 @@ import os, corr, time, datetime, tarfile, shutil
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
-from dbm_load_constants import dbm_load_constants
+from dss_load_constants import dss_load_constants
 
 # communication parameters
 roach_ip        = '192.168.1.10'
@@ -23,10 +23,10 @@ cnt_rst_reg     = 'cnt_rst'
 bram_addr_width = 8  # bits
 bram_word_width = 64 # bits
 pow_data_type   = '>u8'
-bram_rf = ['dout0_0', 'dout0_1', 'dout0_2', 'dout0_3', 
-           'dout0_4', 'dout0_5', 'dout0_6', 'dout0_7']
-bram_lo = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3', 
-           'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']
+bram_lsb = ['dout0_0', 'dout0_1', 'dout0_2', 'dout0_3', 
+            'dout0_4', 'dout0_5', 'dout0_6', 'dout0_7']
+bram_usb = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3', 
+            'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']
 
 # experiment parameters
 lo_freq     = 8000 # MHz
@@ -34,7 +34,7 @@ acc_len     = 2**16
 chnl_step   = 8
 rf_power    = -10 #dBm
 date_time   =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-datadir     = "bm_lnr_tone " + date_time
+datadir     = "dss_srr " + date_time
 pause_time  = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                   # for the spectra to be fully computed after a tone change
 load_consts = True
@@ -42,7 +42,7 @@ load_ideal  = True
 caldir      = None
 
 # derivative parameters
-nchannels     = 2**bram_addr_width * len(bram_rf)
+nchannels     = 2**bram_addr_width * len(bram_lsb)
 if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False)
 test_channels = range(1, nchannels, chnl_step)
 if_test_freqs = if_freqs[test_channels]
@@ -68,7 +68,7 @@ def main():
     #####################
     # loading calibration constants
     if load_consts:
-        bm_load_constants(roach, load_ideal, 1+0j, caldir)
+        dss_load_constants(roach, load_ideal, 0+1j, caldir)
 
     print("Setting and resetting registers...")
     roach.write_int(acc_len_reg, acc_len)
@@ -84,13 +84,13 @@ def main():
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
     rf_freqs = lo_freq + if_freqs
-    rf_toneusb, lo_toneusb = get_lnrdata(rf_freqs, "usb")
+    usb_toneusb, lsb_toneusb = get_srrdata(rf_freqs, "usb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
         
     print("Starting tone sweep in lower sideband...")
     sweep_time = time.time()
     rf_freqs = lo_freq - if_freqs
-    rf_tonelsb, lo_tonelsb = get_lnrdata(rf_freqs, "lsb")
+    usb_tonelsb, lsb_tonelsb = get_srrdata(rf_freqs, "lsb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
 
     print("Turning off intruments...")
@@ -98,9 +98,9 @@ def main():
     print("done")
 
     print("Saving data...")
-    np.savez(datadir+"/lnrdata", 
-        rf_toneusb=rf_toneusb, lo_toneusb=lo_toneusb,
-        rf_tonelsb=rf_tonelsb, lo_tonelsb=lo_tonelsb)
+    np.savez(datadir+"/srrdata", 
+        usb_toneusb=usb_toneusb, lsb_toneusb=lsb_toneusb,
+        usb_tonelsb=usb_tonelsb, lsb_tonelsb=lsb_tonelsb)
     print("done")
 
     print("Printing data...")
@@ -134,21 +134,21 @@ def create_figure():
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')
-    ax0.set_title("RF spec")         ; ax1.set_title("LO spec")
+    ax0.set_title("USB spec")         ; ax1.set_title("LSB spec")
 
-    # LNR axes
+    # SRR axes
     ax2.set_xlim((0, bandwidth))     ; ax3.set_xlim((0, bandwidth))     
     ax2.set_ylim((0, 80))            ; ax3.set_ylim((0, 80))            
     ax2.grid()                       ; ax3.grid()                       
     ax2.set_xlabel('Frequency [MHz]'); ax3.set_xlabel('Frequency [MHz]')
-    ax2.set_ylabel('LNR [dB]')       ; ax3.set_ylabel('LNR [dB]') 
-    ax2.set_title("LNR USB")         ; ax3.set_title("LNR LSB")         
+    ax2.set_ylabel('SRR [dB]')       ; ax3.set_ylabel('SRR [dB]') 
+    ax2.set_title("SRR USB")         ; ax3.set_title("SRR LSB")         
 
     return fig, line0, line1, line2, line3
 
 def make_data_directory():
     """
-    Make directory where to save all the lnr data.
+    Make directory where to save all the srr data.
     """
     os.mkdir(datadir)
 
@@ -172,20 +172,20 @@ def make_data_directory():
     os.mkdir(datadir + "/rawdata_usb")
     os.mkdir(datadir + "/rawdata_lsb")
 
-def get_lnrdata(rf_freqs, tone_sideband):
+def get_srrdata(rf_freqs, tone_sideband):
     """
-    Sweep a tone through a sideband and get the lnr data.
-    The lnr data is the power of each tone after applying the calibration
-    constants (rf), and the negative of the constants (lo).
+    Sweep a tone through a sideband and get the srr data.
+    The srr data is the power of each tone after applying the calibration
+    constants for each sideband (usb and lsb).
     The full sprecta measured for each tone is saved to data for debugging
     purposes.
     :param rf_freqs: frequencies of the tones to perform the sweep.
     :param tone_sideband: sideband of the injected test tone. Either USB or LSB
-    :return: lnr data: rf and lo.
+    :return: srr data: usb and lsb.
     """
-    fig.canvas.set_window_title(tone_sideband.upper() + " Sweep")
+    fig.canvas.set_window_title(tone_sideband.upper() + " Tone Sweep")
 
-    rf_arr = []; lo_arr = []
+    usb_arr = []; lsb_arr = []
     for i, chnl in enumerate(test_channels):
         # set test tone
         freq = rf_freqs[chnl]
@@ -193,41 +193,44 @@ def get_lnrdata(rf_freqs, tone_sideband):
         time.sleep(pause_time)
 
         # read data
-        rf = read_interleave_data(roach, bram_rf,  bram_addr_width, 
-                                  bram_word_width, pow_data_type)
-        lo = read_interleave_data(roach, bram_lo,  bram_addr_width, 
-                                  bram_word_width, pow_data_type)
+        usb = read_interleave_data(roach, bram_usb, bram_addr_width, 
+                                   bram_word_width, pow_data_type)
+        lsb = read_interleave_data(roach, bram_lsb, bram_addr_width, 
+                                   bram_word_width, pow_data_type)
 
         # append data to arrays
-        rf_arr.append(rf[chnl])
-        lo_arr.append(lo[chnl])
+        usb_arr.append(usb[chnl])
+        lsb_arr.append(lsb[chnl])
 
         # scale and dBFS data for plotting
-        rf_plot = cd.scale_and_dBFS_specdata(rf, acc_len, dBFS)
-        lo_plot = cd.scale_and_dBFS_specdata(lo, acc_len, dBFS)
+        usb_plot = cd.scale_and_dBFS_specdata(usb, acc_len, dBFS)
+        lsb_plot = cd.scale_and_dBFS_specdata(lsb, acc_len, dBFS)
 
-        # compute lnr for plotting
-        lnr = np.divide(lo_arr, rf_arr)
+        # compute srr for plotting
+        if tone_sideband=='usb':
+            srr = np.divide(usb_arr, lsb_arr)
+        else: # tone_sideband=='lsb
+            srr = np.divide(lsb_arr, usb_arr)
 
         # define sb plot line
         line_sb = line2 if tone_sideband=='usb' else line3
 
         # plot data
-        line0.set_data(if_freqs, rf_plot)
-        line1.set_data(if_freqs, lo_plot)
-        line_sb.set_data(if_test_freqs[:i+1], 10*np.log10(lnr))
+        line0.set_data(if_freqs, usb_plot)
+        line1.set_data(if_freqs, lsb_plot)
+        line_sb.set_data(if_test_freqs[:i+1], 10*np.log10(srr))
         fig.canvas.draw()
         fig.canvas.flush_events()
         
         # save data
         np.savez(datadir+"/rawdata_tone_" + tone_sideband + "/chnl_" + str(chnl), 
-            rf=rf, lo=lo)
+            usb=usb, lsb=lsb)
 
     # compute interpolations
-    rf_arr = np.interp(if_freqs, if_test_freqs, rf_arr)
-    lo_arr = np.interp(if_freqs, if_test_freqs, lo_arr)
+    usb_arr = np.interp(if_freqs, if_test_freqs, usb_arr)
+    lsb_arr = np.interp(if_freqs, if_test_freqs, lsb_arr)
 
-    return rf_arr, lo_arr
+    return usb_arr, lsb_arr
 
 def print_data():
     """
@@ -238,22 +241,22 @@ def print_data():
     rf_freqs_lsb = lo_freq - if_freqs
 
     # get data
-    lnrdata = np.load(datadir + "/lnrdata.npz")
-    rf_toneusb = lnrdata['rf_toneusb']; lo_toneusb = lnrdata['lo_toneusb']
-    rf_tonelsb = lnrdata['rf_tonelsb']; lo_tonelsb = lnrdata['lo_tonelsb']
+    lnrdata = np.load(datadir + "/srrdata.npz")
+    usb_toneusb = srrdata['usb_toneusb']; lsb_toneusb = srrdata['lsb_toneusb']
+    usb_tonelsb = srrdata['usb_tonelsb']; lsb_tonelsb = srrdata['lsb_tonelsb']
 
     # compute ratios
-    lnr_usb = lo_toneusb / rf_toneusb
-    lnr_lsb = lo_tonelsb / rf_tonelsb
+    srr_usb = usb_toneusb / lsb_toneusb
+    srr_lsb = lsb_tonelsb / usb_tonelsb
 
     # print LNR
     plt.figure()
-    plt.plot(rf_freqs_usb, 10*np.log10(lnr_usb), 'b')
-    plt.plot(rf_freqs_lsb, 10*np.log10(lnr_lsb), 'b')
+    plt.plot(rf_freqs_usb, 10*np.log10(srr_usb), 'b')
+    plt.plot(rf_freqs_lsb, 10*np.log10(srr_lsb), 'b')
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('LNR [dB]')     
-    plt.savefig(datadir+'/lnr.pdf')
+    plt.savefig(datadir+'/srr.pdf')
     
 def compress_data():
     """

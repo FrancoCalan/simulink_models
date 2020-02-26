@@ -6,24 +6,24 @@ import calandigital as cd
 nchannels      = 2048
 consts_nbits   = 32
 consts_binpt   = 27
-# constants where RF is maximized (LO is rejected)
-bram_consts_rf_re = ['bram_mult0_0_bram_re', 'bram_mult0_1_bram_re',
-                     'bram_mult0_2_bram_re', 'bram_mult0_3_bram_re',
-                     'bram_mult0_4_bram_re', 'bram_mult0_5_bram_re',
-                     'bram_mult0_6_bram_re', 'bram_mult0_7_bram_re']
-bram_consts_rf_im = ['bram_mult0_0_bram_im', 'bram_mult0_1_bram_im',
-                     'bram_mult0_2_bram_im', 'bram_mult0_3_bram_im',
-                     'bram_mult0_4_bram_im', 'bram_mult0_5_bram_im',
-                     'bram_mult0_6_bram_im', 'bram_mult0_7_bram_im']
-# constants where LO is maximized (RF is rejected)
-bram_consts_lo_re = ['bram_mult1_0_bram_re', 'bram_mult1_1_bram_re',
-                     'bram_mult1_2_bram_re', 'bram_mult1_3_bram_re',
-                     'bram_mult1_4_bram_re', 'bram_mult1_5_bram_re',
-                     'bram_mult1_6_bram_re', 'bram_mult1_7_bram_re']
-bram_consts_lo_im = ['bram_mult1_0_bram_im', 'bram_mult1_1_bram_im',
-                     'bram_mult1_2_bram_im', 'bram_mult1_3_bram_im',
-                     'bram_mult1_4_bram_im', 'bram_mult1_5_bram_im',
-                     'bram_mult1_6_bram_im', 'bram_mult1_7_bram_im']
+# constants where USB is maximized (LSB is rejected)
+bram_consts_usb_re = ['bram_mult1_0_bram_re', 'bram_mult1_1_bram_re',
+                      'bram_mult1_2_bram_re', 'bram_mult1_3_bram_re',
+                      'bram_mult1_4_bram_re', 'bram_mult1_5_bram_re',
+                      'bram_mult1_6_bram_re', 'bram_mult1_7_bram_re']
+bram_consts_usb_im = ['bram_mult1_0_bram_im', 'bram_mult1_1_bram_im',
+                      'bram_mult1_2_bram_im', 'bram_mult1_3_bram_im',
+                      'bram_mult1_4_bram_im', 'bram_mult1_5_bram_im',
+                      'bram_mult1_6_bram_im', 'bram_mult1_7_bram_im']
+# constants where LSB is maximized (USB is rejected)
+bram_consts_lsb_re = ['bram_mult0_0_bram_re', 'bram_mult0_1_bram_re',
+                      'bram_mult0_2_bram_re', 'bram_mult0_3_bram_re',
+                      'bram_mult0_4_bram_re', 'bram_mult0_5_bram_re',
+                      'bram_mult0_6_bram_re', 'bram_mult0_7_bram_re']
+bram_consts_lsb_im = ['bram_mult0_0_bram_im', 'bram_mult0_1_bram_im',
+                      'bram_mult0_2_bram_im', 'bram_mult0_3_bram_im',
+                      'bram_mult0_4_bram_im', 'bram_mult0_5_bram_im',
+                      'bram_mult0_6_bram_im', 'bram_mult0_7_bram_im']
 
 if __name__ == '__main__':
     # if used as main script, read command line argmuments 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     parser.add_argument("-li", "--load_ideal", dest="load_ideal", action="store_true",
         help="If used, load ideal constant, else use calibration constants \
         from caldir.")
-    parser.add_argument("-ic", "--ideal_const", dest="ideal_const", default="1",
+    parser.add_argument("-ic", "--ideal_const", dest="ideal_const", default="0+1j",
         help="Ideal constant to load value to load.")
     parser.add_argument("-cd", "--caldir", dest="caldir",
         help="Directory from where extract the calibration constants. \
@@ -48,11 +48,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     roach = cd.initialize_roach(args.ip, boffile=args.boffile, upload=args.upload)
-    dbm_load_constants(roach, args.load_ideal, complex(args.ideal_const), args.caldir)
+    bm_load_constants(roach, args.load_ideal, complex(args.ideal_const), args.caldir)
 
-def dbm_load_constants(roach, load_ideal, ideal_const=1+0j, caldir=""):
+def dss_load_constants(roach, load_ideal, ideal_const=0+1j, caldir=""):
     """
-    Load load digital balance mixer constants.
+    Load load digital sideband separation constants.
     :param roach: FpgaClient object to communicate with roach.
     :param load_ideal: if True, load ideal constant, else use calibration 
         constants from caldir.
@@ -64,24 +64,14 @@ def dbm_load_constants(roach, load_ideal, ideal_const=1+0j, caldir=""):
         consts = ideal_const * np.ones(nchannels, dtype=np.complex64)
     else: # use calibrated constants
         print("Using constants from calibration directory.")
-        if caldir.startswith("dbm_cal_tone"):
-            print("Computing constants from tone calibration.")
-            consts = compute_tone_consts(caldir)
-
-        elif caldir.startswith("dbm_cal_noise"):
-            print("Computing constants from noise calibration.")
-            consts = compute_noise_consts(caldir)
-
-        else:
-            print("Unable to get calibration time :(")
-            exit()
+        consts_lsb, consts_usb = compute_consts(caldir)
 
     print("Loading constants...")
     load_comp_constants(roach,    consts, bram_consts_rf_re, bram_consts_rf_im)
     load_comp_constants(roach, -1*consts, bram_consts_lo_re, bram_consts_lo_im)
     print("done")
 
-def compute_tone_consts(caldir):
+def compute_consts(caldir):
     """
     Compute constants using tone calibration info.
     :param caldir: calibration directory.
@@ -94,23 +84,10 @@ def compute_tone_consts(caldir):
     b2_usb = caldata['b2_usb']; b2_lsb = caldata['b2_lsb']
     ab_usb = caldata['ab_usb']; ab_lsb = caldata['ab_lsb']
 
-    #consts = -1.0 * ab_usb / b2_usb
-    #consts = -1.0 * ab_lsb / b2_lsb
-    # use combination of lsb and usb
-    consts = -1.0 *  (ab_usb + ab_lsb) / (b2_usb + b2_lsb)
+    consts_lsb =         -1 * ab_lsb  / b2_lsb #  ab*   / bb* = a/b = USB/LSB.
+    consts_usb = -1 * np.conj(ab_usb) / a2_usb # (ab*)* / aa* = a*b / aa* = b/a = LSB/USB
 
-    return consts
-
-def compute_noise_consts(caldir):
-    """
-    Compute constants using noise calibration info.
-    :param caldir: calibration directory.
-    :return: calibration constants.
-    """
-    caldata = get_caldata(caldir)
-    consts = -1 * caldata['ab']  / caldata['b2'] # -ab* / bb* = -a/b
-
-    return consts
+    return consts_lsb, consts_usb
 
 def get_datacal(datadir):
     """

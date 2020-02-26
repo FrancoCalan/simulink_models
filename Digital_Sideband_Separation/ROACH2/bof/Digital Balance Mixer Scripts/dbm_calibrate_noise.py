@@ -25,7 +25,7 @@ pow_data_type      = '>u8'
 crosspow_data_type = '>i8'
 bram_a2    = ['dout_a2_0', 'dout_a2_1', 'dout_a2_2', 'dout_a2_3', 
               'dout_a2_4', 'dout_a2_5', 'dout_a2_6', 'dout_a2_7']
-babm_b2    = ['dout_b2_0', 'dout_b2_1', 'dout_b2_2', 'dout_b2_3', 
+bram_b2    = ['dout_b2_0', 'dout_b2_1', 'dout_b2_2', 'dout_b2_3', 
               'dout_b2_4', 'dout_b2_5', 'dout_b2_6', 'dout_b2_7']
 bram_ab_re = ['dout_ab_re0', 'dout_ab_re1', 'dout_ab_re2', 'dout_ab_re3', 
               'dout_ab_re4', 'dout_ab_re5', 'dout_ab_re6', 'dout_ab_re7']
@@ -36,7 +36,7 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
 lo_freq    = 8000 # MHz
 acc_len    = 2**20
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-datadir    = "bm_cal_noise " + date_time
+datadir    = "dbm_cal_noise " + date_time
 pause_time = 8.0 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                  # for the spectra to be fully computed after a tone change
 
