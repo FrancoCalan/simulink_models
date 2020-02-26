@@ -7,23 +7,23 @@ nchannels      = 2048
 consts_nbits   = 32
 consts_binpt   = 27
 # constants where USB is maximized (LSB is rejected)
-bram_consts_usb_re = ['bram_mult1_0_bram_re', 'bram_mult1_1_bram_re',
-                      'bram_mult1_2_bram_re', 'bram_mult1_3_bram_re',
-                      'bram_mult1_4_bram_re', 'bram_mult1_5_bram_re',
-                      'bram_mult1_6_bram_re', 'bram_mult1_7_bram_re']
-bram_consts_usb_im = ['bram_mult1_0_bram_im', 'bram_mult1_1_bram_im',
-                      'bram_mult1_2_bram_im', 'bram_mult1_3_bram_im',
-                      'bram_mult1_4_bram_im', 'bram_mult1_5_bram_im',
-                      'bram_mult1_6_bram_im', 'bram_mult1_7_bram_im']
-# constants where LSB is maximized (USB is rejected)
-bram_consts_lsb_re = ['bram_mult0_0_bram_re', 'bram_mult0_1_bram_re',
+bram_consts_usb_re = ['bram_mult0_0_bram_re', 'bram_mult0_1_bram_re',
                       'bram_mult0_2_bram_re', 'bram_mult0_3_bram_re',
                       'bram_mult0_4_bram_re', 'bram_mult0_5_bram_re',
                       'bram_mult0_6_bram_re', 'bram_mult0_7_bram_re']
-bram_consts_lsb_im = ['bram_mult0_0_bram_im', 'bram_mult0_1_bram_im',
+bram_consts_usb_im = ['bram_mult0_0_bram_im', 'bram_mult0_1_bram_im',
                       'bram_mult0_2_bram_im', 'bram_mult0_3_bram_im',
                       'bram_mult0_4_bram_im', 'bram_mult0_5_bram_im',
                       'bram_mult0_6_bram_im', 'bram_mult0_7_bram_im']
+# constants where LSB is maximized (USB is rejected)
+bram_consts_lsb_re = ['bram_mult1_0_bram_re', 'bram_mult1_1_bram_re',
+                      'bram_mult1_2_bram_re', 'bram_mult1_3_bram_re',
+                      'bram_mult1_4_bram_re', 'bram_mult1_5_bram_re',
+                      'bram_mult1_6_bram_re', 'bram_mult1_7_bram_re']
+bram_consts_lsb_im = ['bram_mult1_0_bram_im', 'bram_mult1_1_bram_im',
+                      'bram_mult1_2_bram_im', 'bram_mult1_3_bram_im',
+                      'bram_mult1_4_bram_im', 'bram_mult1_5_bram_im',
+                      'bram_mult1_6_bram_im', 'bram_mult1_7_bram_im']
 
 if __name__ == '__main__':
     # if used as main script, read command line argmuments 
@@ -61,14 +61,15 @@ def dss_load_constants(roach, load_ideal, ideal_const=0+1j, caldir=""):
     """
     if load_ideal:
         print("Using ideal constant " + str(ideal_const) + ".")
-        consts = ideal_const * np.ones(nchannels, dtype=np.complex64)
+        consts_usb = ideal_const * np.ones(nchannels, dtype=np.complex64)
+        consts_lsb = ideal_const * np.ones(nchannels, dtype=np.complex64)
     else: # use calibrated constants
         print("Using constants from calibration directory.")
         consts_lsb, consts_usb = compute_consts(caldir)
 
     print("Loading constants...")
-    load_comp_constants(roach,    consts, bram_consts_rf_re, bram_consts_rf_im)
-    load_comp_constants(roach, -1*consts, bram_consts_lo_re, bram_consts_lo_im)
+    load_comp_constants(roach, consts_usb, bram_consts_usb_re, bram_consts_usb_im)
+    load_comp_constants(roach, consts_lsb, bram_consts_lsb_re, bram_consts_lsb_im)
     print("done")
 
 def compute_consts(caldir):
@@ -80,16 +81,18 @@ def compute_consts(caldir):
     caldata = get_caldata(caldir)
     
     # get arrays
-    a2_usb = caldata['a2_usb']; a2_lsb = caldata['a2_lsb']
-    b2_usb = caldata['b2_usb']; b2_lsb = caldata['b2_lsb']
-    ab_usb = caldata['ab_usb']; ab_lsb = caldata['ab_lsb']
+    a2_toneusb = caldata['a2_toneusb']; a2_tonelsb = caldata['a2_tonelsb']
+    b2_toneusb = caldata['b2_toneusb']; b2_tonelsb = caldata['b2_tonelsb']
+    ab_toneusb = caldata['ab_toneusb']; ab_tonelsb = caldata['ab_tonelsb']
 
-    consts_lsb =         -1 * ab_lsb  / b2_lsb #  ab*   / bb* = a/b = USB/LSB.
-    consts_usb = -1 * np.conj(ab_usb) / a2_usb # (ab*)* / aa* = a*b / aa* = b/a = LSB/USB
+    # consts usb are computed with tone in lsb, because you want to cancel out lsb,
+    # the same for consts lsb
+    consts_usb =         -1 * ab_tonelsb  / b2_tonelsb #  ab*   / bb* = a/b
+    consts_lsb = -1 * np.conj(ab_toneusb) / a2_toneusb # (ab*)* / aa* = a*b / aa* = b/a
 
     return consts_lsb, consts_usb
 
-def get_datacal(datadir):
+def get_caldata(datadir):
     """
     Extract calibration data from directory compressed as .tar.gz.
     """
@@ -118,5 +121,5 @@ def load_comp_constants(roach, consts, bram_re, bram_im):
     consts_im_fixed = cd.float2fixed(consts_im, consts_nbits, consts_binpt, warn=True)
 
     # load data
-    cd.write_interleaved_data(roach, bram_re, 8, consts_re_fixed)
-    cd.write_interleaved_data(roach, bram_im, 8, consts_im_fixed)
+    cd.write_interleaved_data(roach, bram_re, consts_re_fixed)
+    cd.write_interleaved_data(roach, bram_im, consts_im_fixed)

@@ -11,9 +11,9 @@ import calandigital as cd
 from dss_load_constants import dss_load_constants
 
 # communication parameters
-roach_ip        = '192.168.1.10'
+roach_ip        = '192.168.1.12'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
-rf_generator_ip = '192.168.1.31'
+rf_generator_ip = '192.168.1.34'
 
 # model parameters
 adc_bits        = 8
@@ -23,23 +23,23 @@ cnt_rst_reg     = 'cnt_rst'
 bram_addr_width = 8  # bits
 bram_word_width = 64 # bits
 pow_data_type   = '>u8'
-bram_lsb = ['dout0_0', 'dout0_1', 'dout0_2', 'dout0_3', 
+bram_usb = ['dout0_0', 'dout0_1', 'dout0_2', 'dout0_3', 
             'dout0_4', 'dout0_5', 'dout0_6', 'dout0_7']
-bram_usb = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3', 
+bram_lsb = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3', 
             'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']
 
 # experiment parameters
-lo_freq     = 8000 # MHz
+lo_freq     = 3000 # MHz
 acc_len     = 2**16
-chnl_step   = 8
-rf_power    = -10 #dBm
+chnl_step   = 4
+rf_power    = -19 #dBm
 date_time   =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir     = "dss_srr " + date_time
 pause_time  = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                   # for the spectra to be fully computed after a tone change
 load_consts = True
-load_ideal  = True
-caldir      = None
+load_ideal  = False
+caldir      = 'dss_cal 2020-02-26 16:59:16.tar.gz'
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_lsb)
@@ -68,10 +68,12 @@ def main():
     #####################
     # loading calibration constants
     if load_consts:
-        dss_load_constants(roach, load_ideal, 0+1j, caldir)
+        dss_load_constants(roach, load_ideal, 0-1j, caldir)
 
-    print("Setting and resetting registers...")
+    print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
+    print("done")
+    print("Resseting counter registers...")
     roach.write_int(cnt_rst_reg, 1)
     roach.write_int(cnt_rst_reg, 0)
     print("done")
@@ -93,7 +95,7 @@ def main():
     usb_tonelsb, lsb_tonelsb = get_srrdata(rf_freqs, "lsb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
 
-    print("Turning off intruments...")
+    print("Turning off instruments...")
     rf_generator.write("outp off")
     print("done")
 
@@ -130,11 +132,11 @@ def create_figure():
     
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
-    ax0.set_ylim((-80, 0))           ; ax1.set_ylim((-80, 0))
+    ax0.set_ylim((-80, 5))           ; ax1.set_ylim((-80, 5))
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')
-    ax0.set_title("USB spec")         ; ax1.set_title("LSB spec")
+    ax0.set_title('USB spec')        ; ax1.set_title('LSB spec')
 
     # SRR axes
     ax2.set_xlim((0, bandwidth))     ; ax3.set_xlim((0, bandwidth))     
@@ -142,7 +144,7 @@ def create_figure():
     ax2.grid()                       ; ax3.grid()                       
     ax2.set_xlabel('Frequency [MHz]'); ax3.set_xlabel('Frequency [MHz]')
     ax2.set_ylabel('SRR [dB]')       ; ax3.set_ylabel('SRR [dB]') 
-    ax2.set_title("SRR USB")         ; ax3.set_title("SRR LSB")         
+    ax2.set_title('SRR USB')         ; ax3.set_title('SRR LSB')         
 
     return fig, line0, line1, line2, line3
 
@@ -169,8 +171,8 @@ def make_data_directory():
         f.write("caldir:       " + str(caldir))
 
     # make rawdata folders
-    os.mkdir(datadir + "/rawdata_usb")
-    os.mkdir(datadir + "/rawdata_lsb")
+    os.mkdir(datadir + "/rawdata_tone_usb")
+    os.mkdir(datadir + "/rawdata_tone_lsb")
 
 def get_srrdata(rf_freqs, tone_sideband):
     """
@@ -193,10 +195,10 @@ def get_srrdata(rf_freqs, tone_sideband):
         time.sleep(pause_time)
 
         # read data
-        usb = read_interleave_data(roach, bram_usb, bram_addr_width, 
-                                   bram_word_width, pow_data_type)
-        lsb = read_interleave_data(roach, bram_lsb, bram_addr_width, 
-                                   bram_word_width, pow_data_type)
+        usb = cd.read_interleave_data(roach, bram_usb, bram_addr_width, 
+                                      bram_word_width, pow_data_type)
+        lsb = cd.read_interleave_data(roach, bram_lsb, bram_addr_width, 
+                                      bram_word_width, pow_data_type)
 
         # append data to arrays
         usb_arr.append(usb[chnl])
@@ -241,7 +243,7 @@ def print_data():
     rf_freqs_lsb = lo_freq - if_freqs
 
     # get data
-    lnrdata = np.load(datadir + "/srrdata.npz")
+    srrdata = np.load(datadir + "/srrdata.npz")
     usb_toneusb = srrdata['usb_toneusb']; lsb_toneusb = srrdata['lsb_toneusb']
     usb_tonelsb = srrdata['usb_tonelsb']; lsb_tonelsb = srrdata['lsb_tonelsb']
 
@@ -249,13 +251,13 @@ def print_data():
     srr_usb = usb_toneusb / lsb_toneusb
     srr_lsb = lsb_tonelsb / usb_tonelsb
 
-    # print LNR
+    # print SRR
     plt.figure()
     plt.plot(rf_freqs_usb, 10*np.log10(srr_usb), 'b')
     plt.plot(rf_freqs_lsb, 10*np.log10(srr_lsb), 'b')
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
-    plt.ylabel('LNR [dB]')     
+    plt.ylabel('SRR [dB]')     
     plt.savefig(datadir+'/srr.pdf')
     
 def compress_data():

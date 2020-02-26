@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import calandigital as cd
 
 # communication parameters
-roach_ip        = '192.168.1.10'
+roach_ip        = '192.168.1.12'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
 
 # model parameters
@@ -33,7 +33,7 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
               'dout_ab_im4', 'dout_ab_im5', 'dout_ab_im6', 'dout_ab_im7']
 
 # experiment parameters
-lo_freq    = 8000 # MHz
+lo_freq    = 3000 # MHz
 acc_len    = 2**20
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "dbm_cal_noise " + date_time
@@ -62,8 +62,10 @@ def main():
     #####################
     # Start Measurement #
     #####################
-    print("Setting and resetting registers...")
+    print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
+    print("done")
+    print("Resseting counter registers...")
     roach.write_int(cnt_rst_reg, 1)
     roach.write_int(cnt_rst_reg, 0)
     print("done")
@@ -109,7 +111,7 @@ def create_figure():
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')
-    ax0.set_title("ZDOK0 spec")      ; ax1.set_title("ZDOK1 spec")
+    ax0.set_title('ZDOK0 spec')      ; ax1.set_title('ZDOK1 spec')
 
     # set magnitude diference axis
     ax2.set_xlim((0, bandwidth))
@@ -152,14 +154,14 @@ def get_caldata():
     """
     # read data
     time.sleep(pause_time)
-    a2    = read_interleave_data(roach, bram_a2,    bram_addr_width, 
-                                 bram_word_width,   pow_data_type)
-    b2    = read_interleave_data(roach, bram_b2,    bram_addr_width, 
-                                 bram_word_width,   pow_data_type)
-    ab_re = read_interleave_data(roach, bram_ab_re, bram_addr_width, 
-                                 bram_word_width,   crosspow_data_type)
-    ab_im = read_interleave_data(roach, bram_ab_im, bram_addr_width, 
-                                 bram_word_width,   crosspow_data_type)
+    a2    = cd.read_interleave_data(roach, bram_a2,    bram_addr_width, 
+                                    bram_word_width,   pow_data_type)
+    b2    = cd.read_interleave_data(roach, bram_b2,    bram_addr_width, 
+                                    bram_word_width,   pow_data_type)
+    ab_re = cd.read_interleave_data(roach, bram_ab_re, bram_addr_width, 
+                                    bram_word_width,   crosspow_data_type)
+    ab_im = cd.read_interleave_data(roach, bram_ab_im, bram_addr_width, 
+                                    bram_word_width,   crosspow_data_type)
 
     # get crosspower as complex values
     ab = ab_re + 1j*ab_im

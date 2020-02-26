@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import calandigital as cd
 
 # communication parameters
-roach_ip        = '192.168.1.10'
+roach_ip        = '192.168.1.12'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
 
 # model parameters
@@ -28,7 +28,7 @@ bram_lo = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3',
            'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']
 
 # experiment parameters
-lo_freq     = 8000 # MHz
+lo_freq     = 3000 # MHz
 acc_len     = 2**20
 date_time   =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir     = "dbm_lnr_noise " + date_time
@@ -64,8 +64,10 @@ def main():
     if load_consts:
         dbm_load_constants(roach, load_ideal, 1+0j, caldir)
 
-    print("Setting and resetting registers...")
+    print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
+    print("done")
+    print("Resseting counter registers...")
     roach.write_int(cnt_rst_reg, 1)
     roach.write_int(cnt_rst_reg, 0)
     print("done")
@@ -120,7 +122,7 @@ def create_figure():
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')
-    ax0.set_title("RF spec")         ; ax1.set_title("LO spec")
+    ax0.set_title('RF spec')         ; ax1.set_title('LO spec')
     az0.legend()                     ;ax1.legend()
 
     # LNR axis
@@ -129,7 +131,7 @@ def create_figure():
     ax2.grid()                       
     ax2.set_xlabel('Frequency [MHz]')
     ax2.set_ylabel('LNR [dB]') 
-    ax2.set_title("LNR")         
+    ax2.set_title('LNR')         
     
     return fig, line0_cold, line0_hot, line1_cold, line1_hot, line2
 
@@ -163,10 +165,10 @@ def get_lnrdata(line0, line1):
     """    
     # read data
     time.sleep(pause_time)
-    rf = read_interleave_data(roach, bram_rf,  bram_addr_width, 
-                              bram_word_width, pow_data_type)
-    lo = read_interleave_data(roach, bram_lo,  bram_addr_width, 
-                              bram_word_width, pow_data_type)
+    rf = cd.read_interleave_data(roach, bram_rf,  bram_addr_width, 
+                                 bram_word_width, pow_data_type)
+    lo = cd.read_interleave_data(roach, bram_lo,  bram_addr_width, 
+                                 bram_word_width, pow_data_type)
 
 
     # scale and dBFS data for plotting

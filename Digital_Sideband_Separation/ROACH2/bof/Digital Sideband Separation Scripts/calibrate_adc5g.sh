@@ -1,7 +1,7 @@
 #!/bin/sh
 calibrate_adc5g.py \
     --ip         192.168.1.12 \
-    --bof        dss_2048ch_1520mhz.bof.gz \
+    `#--bof        dss_2048ch_1520mhz.bof.gz` \
     `#--upload` \
     `#--genip      192.168.1.34` \
     --genfreq    10 \

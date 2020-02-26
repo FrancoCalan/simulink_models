@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import calandigital as cd
 
 # communication parameters
-roach_ip        = '192.168.1.10'
+roach_ip        = '192.168.1.12'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
-rf_generator_ip = '192.168.1.31'
+rf_generator_ip = '192.168.1.34'
 
 # model parameters
 adc_bits           = 8
@@ -34,10 +34,10 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
               'dout_ab_im4', 'dout_ab_im5', 'dout_ab_im6', 'dout_ab_im7']
 
 # experiment parameters
-lo_freq    = 8000 # MHz
+lo_freq    = 3000 # MHz
 acc_len    = 2**16
 chnl_step  = 8
-rf_power   = -10 #dBm
+rf_power   = -19 #dBm
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "dbm_cal_tone " + date_time
 pause_time = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
@@ -68,8 +68,10 @@ def main():
     #####################
     # Start Measurement #
     #####################
-    print("Setting and resetting registers...")
+    print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
+    print("done")
+    print("Resseting counter registers...")
     roach.write_int(cnt_rst_reg, 1)
     roach.write_int(cnt_rst_reg, 0)
     print("done")
@@ -82,23 +84,23 @@ def main():
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
     rf_freqs = lo_freq + if_freqs
-    a2_usb, b2_usb, ab_usb = get_caldata(rf_freqs, "usb")
+    a2_toneusb, b2_toneusb, ab_toneusb = get_caldata(rf_freqs, "usb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
         
     print("Starting tone sweep in lower sideband...")
     sweep_time = time.time()
     rf_freqs = lo_freq - if_freqs
-    a2_lsb, b2_lsb, ab_lsb = get_caldata(rf_freqs, "lsb")
+    a2_tonelsb, b2_tonelsb, ab_tonelsb = get_caldata(rf_freqs, "lsb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
 
-    print("Turning off intruments...")
+    print("Turning off instruments...")
     rf_generator.write("outp off")
     print("done")
 
     print("Saving data...")
     np.savez(datadir+"/caldata", 
-        a2_usb=a2_usb, b2_usb=b2_usb, ab_usb=ab_usb,
-        a2_lsb=a2_lsb, b2_lsb=b2_lsb, ab_lsb=ab_lsb)
+        a2_toneusb=a2_toneusb, b2_toneusb=b2_toneusb, ab_toneusb=ab_toneusb,
+        a2_tonelsb=a2_tonelsb, b2_tonelsb=b2_tonelsb, ab_tonelsb=ab_tonelsb)
     print("done")
 
     print("Printing data...")
@@ -132,7 +134,7 @@ def create_figure():
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')
-    ax0.set_title("ZDOK0 spec")      ; ax1.set_title("ZDOK1 spec")
+    ax0.set_title('ZDOK0 spec')      ; ax1.set_title('ZDOK1 spec')
 
     # set magnitude diference axis
     ax2.set_xlim((0, bandwidth))
@@ -170,8 +172,8 @@ def make_data_directory():
         f.write("rf power:     " + str(rf_power))
 
     # make rawdata folders
-    os.mkdir(datadir + "/rawdata_usb")
-    os.mkdir(datadir + "/rawdata_lsb")
+    os.mkdir(datadir + "/rawdata_tone_usb")
+    os.mkdir(datadir + "/rawdata_tone_lsb")
 
 def get_caldata(rf_freqs, sideband):
     """
@@ -194,14 +196,14 @@ def get_caldata(rf_freqs, sideband):
         time.sleep(pause_time)
 
         # read data
-        a2    = read_interleave_data(roach, bram_a2,    bram_addr_width, 
-                                     bram_word_width,   pow_data_type)
-        b2    = read_interleave_data(roach, bram_b2,    bram_addr_width, 
-                                     bram_word_width,   pow_data_type)
-        ab_re = read_interleave_data(roach, bram_ab_re, bram_addr_width, 
-                                     bram_word_width,   crosspow_data_type)
-        ab_im = read_interleave_data(roach, bram_ab_im, bram_addr_width, 
-                                     bram_word_width,   crosspow_data_type)
+        a2    = cd.read_interleave_data(roach, bram_a2,    bram_addr_width, 
+                                        bram_word_width,   pow_data_type)
+        b2    = cd.read_interleave_data(roach, bram_b2,    bram_addr_width, 
+                                        bram_word_width,   pow_data_type)
+        ab_re = cd.read_interleave_data(roach, bram_ab_re, bram_addr_width, 
+                                        bram_word_width,   crosspow_data_type)
+        ab_im = cd.read_interleave_data(roach, bram_ab_im, bram_addr_width, 
+                                        bram_word_width,   crosspow_data_type)
 
         # append data to arrays
         a2_arr.append(a2[chnl])
@@ -224,7 +226,7 @@ def get_caldata(rf_freqs, sideband):
         fig.canvas.flush_events()
         
         # save data
-        np.savez(datadir+"/rawdata_" + sideband + "/chnl_" + str(chnl), 
+        np.savez(datadir+"/rawdata_tone_" + sideband + "/chnl_" + str(chnl), 
             a2=a2, b2=b2, ab_re=ab_re, ab_im=ab_im)
 
     # compute interpolations
@@ -244,13 +246,13 @@ def print_data():
 
     # get data
     caldata = np.load(datadir + "/caldata.npz")
-    a2_usb = caldata['a2_usb']; a2_lsb = caldata['a2_lsb']
-    b2_usb = caldata['b2_usb']; b2_lsb = caldata['b2_lsb']
-    ab_usb = caldata['ab_usb']; ab_lsb = caldata['ab_lsb']
+    a2_toneusb = caldata['a2_toneusb']; a2_lsb = caldata['a2_tonelsb']
+    b2_toneusb = caldata['b2_toneusb']; b2_lsb = caldata['b2_tonelsb']
+    ab_toneusb = caldata['ab_toneusb']; ab_lsb = caldata['ab_tonelsb']
 
     # compute ratios
-    ab_ratios_usb = ab_usb / b2_usb
-    ab_ratios_lsb = ab_lsb / b2_lsb
+    ab_ratios_usb = ab_toneusb / b2_toneusb
+    ab_ratios_lsb = ab_tonelsb / b2_tonelsb
 
     # print magnitude ratios
     plt.figure()

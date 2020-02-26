@@ -90,14 +90,14 @@ def compute_tone_consts(caldir):
     caldata = get_caldata(caldir)
     
     # get arrays
-    a2_usb = caldata['a2_usb']; a2_lsb = caldata['a2_lsb']
-    b2_usb = caldata['b2_usb']; b2_lsb = caldata['b2_lsb']
-    ab_usb = caldata['ab_usb']; ab_lsb = caldata['ab_lsb']
+    a2_toneusb = caldata['a2_toneusb']; a2_tonelsb = caldata['a2_tonelsb']
+    b2_toneusb = caldata['b2_toneusb']; b2_tonelsb = caldata['b2_tonelsb']
+    ab_toneusb = caldata['ab_toneusb']; ab_tonelsb = caldata['ab_tonelsb']
 
     #consts = -1.0 * ab_usb / b2_usb
     #consts = -1.0 * ab_lsb / b2_lsb
     # use combination of lsb and usb
-    consts = -1.0 *  (ab_usb + ab_lsb) / (b2_usb + b2_lsb)
+    consts = -1.0 *  (ab_toneusb + ab_tonelsb) / (b2_toneusb + b2_tonelsb)
 
     return consts
 
@@ -112,7 +112,7 @@ def compute_noise_consts(caldir):
 
     return consts
 
-def get_datacal(datadir):
+def get_caldata(datadir):
     """
     Extract calibration data from directory compressed as .tar.gz.
     """
@@ -141,5 +141,5 @@ def load_comp_constants(roach, consts, bram_re, bram_im):
     consts_im_fixed = cd.float2fixed(consts_im, consts_nbits, consts_binpt, warn=True)
 
     # load data
-    cd.write_interleaved_data(roach, bram_re, 8, consts_re_fixed)
-    cd.write_interleaved_data(roach, bram_im, 8, consts_im_fixed)
+    cd.write_interleaved_data(roach, bram_re, consts_re_fixed)
+    cd.write_interleaved_data(roach, bram_im, consts_im_fixed)
