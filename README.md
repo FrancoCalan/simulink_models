@@ -6,7 +6,7 @@ Repository with the Simulink models developed by the Digital Group of the Millim
 
 calandigital'ed projects:
 - [ ] Digital OMT
-- [ ] Digital Sideband Separation
+- [x] Digital Sideband Separation
 - [ ] Balance Mixer
 - [x] DRAM
 - [ ] Million Channels Spectrometer
