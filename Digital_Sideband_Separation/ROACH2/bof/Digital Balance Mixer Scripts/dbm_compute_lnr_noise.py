@@ -28,12 +28,15 @@ bram_lo = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3',
            'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']
 
 # experiment parameters
-lo_freq    = 8000 # MHz
-acc_len    = 2**20
-date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-datadir    = "bm_lnr_noise " + date_time
-pause_time = 8.0 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
-                 # for the spectra to be fully computed after a tone change
+lo_freq     = 8000 # MHz
+acc_len     = 2**20
+date_time   =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+datadir     = "bm_lnr_noise " + date_time
+pause_time  = 8.0 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
+                  # for the spectra to be fully computed after a tone change
+load_consts = True
+load_ideal  = True
+caldir      = None
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_rf)
@@ -57,6 +60,10 @@ def main():
     #####################
     # Start Measurement #
     #####################
+    # loading calibration constants
+    if load_consts:
+        bm_load_constants(roach, load_ideal, 1+0j, caldir)
+
     print("Setting and resetting registers...")
     roach.write_int(acc_len_reg, acc_len)
     roach.write_int(cnt_rst_reg, 1)
@@ -134,13 +141,16 @@ def make_data_directory():
 
     # make .txt file with test info
     with open(datadir + "/testinfo.txt", "w") as f:
-        f.write("roach ip:     " + roach_ip        + "\n")
-        f.write("date time:    " + date_time       + "\n")
-        f.write("boffile:      " + boffile         + "\n")
-        f.write("bandwidth:    " + str(bandwidth)  + "\n")
-        f.write("lo freq:      " + str(lo_freq)    + "\n")
-        f.write("nchannels:    " + str(nchannels)  + "\n")
-        f.write("acc len:      " + str(acc_len))
+        f.write("roach ip:    " + roach_ip         + "\n")
+        f.write("date time:   " + date_time        + "\n")
+        f.write("boffile:     " + boffile          + "\n")
+        f.write("bandwidth:   " + str(bandwidth)   + "\n")
+        f.write("lo freq:     " + str(lo_freq)     + "\n")
+        f.write("nchannels:   " + str(nchannels)   + "\n")
+        f.write("acc len:     " + str(acc_len))    + "\n")
+        f.write("load consts: " + str(load_consts) + "\n")
+        f.write("load ideal:  " + str(load_ideal)  + "\n")
+        f.write("caldir:      " + str(caldir))
 
 def get_lnrdata(line0, line1):
     """

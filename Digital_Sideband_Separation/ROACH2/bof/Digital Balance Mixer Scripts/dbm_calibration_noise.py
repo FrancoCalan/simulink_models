@@ -135,13 +135,13 @@ def make_data_directory():
 
     # make .txt file with test info
     with open(datadir + "/testinfo.txt", "w") as f:
-        f.write("roach ip:     " + roach_ip        + "\n")
-        f.write("date time:    " + date_time       + "\n")
-        f.write("boffile:      " + boffile         + "\n")
-        f.write("bandwidth:    " + str(bandwidth)  + "\n")
-        f.write("lo freq:      " + str(lo_freq)    + "\n")
-        f.write("nchannels:    " + str(nchannels)  + "\n")
-        f.write("acc len:      " + str(acc_len))
+        f.write("roach ip:  " + roach_ip       + "\n")
+        f.write("date time: " + date_time      + "\n")
+        f.write("boffile:   " + boffile        + "\n")
+        f.write("bandwidth: " + str(bandwidth) + "\n")
+        f.write("lo freq:   " + str(lo_freq)   + "\n")
+        f.write("nchannels: " + str(nchannels) + "\n")
+        f.write("acc len:   " + str(acc_len))
 
 def get_caldata():
     """
