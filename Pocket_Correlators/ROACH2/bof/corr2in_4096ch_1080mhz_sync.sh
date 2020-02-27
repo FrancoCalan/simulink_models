@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 synchronize_adc5g.py \
     --ip             192.168.1.12 \
     --bof            corr2in_4096ch_1080mhz.bof.gz \

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 plot_spectra.py \
     --ip        192.168.1.12 \
     --bof       spec2in_4096ch_1080mhz.bof.gz \

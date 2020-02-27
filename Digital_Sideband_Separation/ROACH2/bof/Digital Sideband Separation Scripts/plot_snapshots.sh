@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 plot_snapshots.py \
     --ip         192.168.1.12 \
     `#--bof        dss_2048ch_1520mhz.bof.gz` \

@@ -1,4 +1,4 @@
-import argparse, tarfile, os
+import argparse, tarfile
 import numpy as np
 import calandigital as cd
 
@@ -117,9 +117,7 @@ def get_caldata(datadir):
     Extract calibration data from directory compressed as .tar.gz.
     """
     tar_file = tarfile.open(datadir)
-    tar_file.extract('caldata.npz')
-    caldata = np.load('caldata.npz')
-    os.remove('caldata.npz')
+    caldata = np.load(tar_file.extractfile('caldata.npz'))
 
     return caldata
 

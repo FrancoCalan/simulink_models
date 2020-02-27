@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 plot_snapshots.py \
     --ip         192.168.1.11 \
     --bof        snap2in.bof\

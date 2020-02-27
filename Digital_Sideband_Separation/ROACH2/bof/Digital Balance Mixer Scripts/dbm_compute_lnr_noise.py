@@ -5,10 +5,11 @@
 # It then saves the results into a compress folder.
 
 # imports
-import os, corr, time, datetime, tarfile, shutil
+import os, corr, time, datetime, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
+from dbm_load_constants import dbm_load_constants
 
 # communication parameters
 roach_ip        = '192.168.1.12'
@@ -141,18 +142,21 @@ def make_data_directory():
     """
     os.mkdir(datadir)
 
-    # make .txt file with test info
-    with open(datadir + "/testinfo.txt", "w") as f:
-        f.write("roach ip:    " + roach_ip         + "\n")
-        f.write("date time:   " + date_time        + "\n")
-        f.write("boffile:     " + boffile          + "\n")
-        f.write("bandwidth:   " + str(bandwidth)   + "\n")
-        f.write("lo freq:     " + str(lo_freq)     + "\n")
-        f.write("nchannels:   " + str(nchannels)   + "\n")
-        f.write("acc len:     " + str(acc_len))    + "\n")
-        f.write("load consts: " + str(load_consts) + "\n")
-        f.write("load ideal:  " + str(load_ideal)  + "\n")
-        f.write("caldir:      " + str(caldir))
+    # make .json file with test info
+    testinfo = {}
+    testinfo["roach ip"]     = roach_ip
+    testinfo["date time"]    = date_time
+    testinfo["boffile"]      = boffile
+    testinfo["bandwidth"]    = bandwidth
+    testinfo["lo freq"]      = lo_freq
+    testinfo["nchannels"]    = nchannels
+    testinfo["acc len"]      = acc_len
+    testinfo["load consts"]  = load_consts
+    testinfo["load ideal"]   = load_ideal
+    testinfo["caldir"]       = caldir
+
+    with open(datadir + "/testinfo.json", "w") as f:
+        json.dump(testinfo, f, indent=4, sort_keys=True)
 
 def get_lnrdata(line0, line1):
     """

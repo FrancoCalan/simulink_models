@@ -5,7 +5,7 @@
 # calibration constants with an lnr computation script.
 
 # imports
-import os, time, datetime, tarfile, shutil
+import os, time, datetime, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
@@ -13,7 +13,7 @@ import calandigital as cd
 # communication parameters
 roach_ip        = '192.168.1.12'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
-rf_generator_ip = '192.168.1.34'
+rf_generator_ip = '192.168.1.31'
 
 # model parameters
 adc_bits           = 8
@@ -34,10 +34,10 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
               'dout_ab_im4', 'dout_ab_im5', 'dout_ab_im6', 'dout_ab_im7']
 
 # experiment parameters
-lo_freq    = 3000 # MHz
+lo_freq    = 11000 # MHz
 acc_len    = 2**16
-chnl_step  = 8
-rf_power   = -19 #dBm
+chnl_step  = 32
+rf_power   = -10 # dBm
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "dbm_cal_tone " + date_time
 pause_time = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
@@ -76,7 +76,7 @@ def main():
     roach.write_int(cnt_rst_reg, 0)
     print("done")
 
-    print("Setting instrumets power and outputs...")
+    print("Setting instruments power and outputs...")
     rf_generator.write("power " + str(rf_power))
     rf_generator.write("outp on")
     print("done")
@@ -138,14 +138,14 @@ def create_figure():
 
     # set magnitude diference axis
     ax2.set_xlim((0, bandwidth))
-    ax2.set_ylim((0, 2))     
+    ax2.set_ylim((0, 4))     
     ax2.grid()                 
     ax2.set_xlabel('Frequency [MHz]')
     ax2.set_ylabel('Mag ratio [lineal]')     
 
     # set magnitude diference axis
     ax3.set_xlim((0, bandwidth))
-    ax3.set_ylim((-180, 180))     
+    ax3.set_ylim((-200, 200))     
     ax3.grid()                 
     ax3.set_xlabel('Frequency [MHz]')
     ax3.set_ylabel('Angle diff [degrees]')
@@ -158,18 +158,21 @@ def make_data_directory():
     """
     os.mkdir(datadir)
 
-    # make .txt file with test info
-    with open(datadir + "/testinfo.txt", "w") as f:
-        f.write("roach ip:     " + roach_ip        + "\n")
-        f.write("date time:    " + date_time       + "\n")
-        f.write("boffile:      " + boffile         + "\n")
-        f.write("bandwidth:    " + str(bandwidth)  + "\n")
-        f.write("lo freq:      " + str(lo_freq)    + "\n")
-        f.write("nchannels:    " + str(nchannels)  + "\n")
-        f.write("acc len:      " + str(acc_len)    + "\n")
-        f.write("chnl step:    " + str(chnl_step)  + "\n")
-        f.write("rf generator: " + rf_generator_ip + "\n")
-        f.write("rf power:     " + str(rf_power))
+    # make .json file with test info
+    testinfo = {}
+    testinfo["roach ip"]     = roach_ip
+    testinfo["date time"]    = date_time
+    testinfo["boffile"]      = boffile
+    testinfo["bandwidth"]    = bandwidth
+    testinfo["lo freq"]      = lo_freq
+    testinfo["nchannels"]    = nchannels
+    testinfo["acc len"]      = acc_len
+    testinfo["chnl step"]    = chnl_step
+    testinfo["rf generator"] = rf_generator_ip
+    testinfo["rf power"]     = rf_power
+
+    with open(datadir + "/testinfo.json", "w") as f:
+        json.dump(testinfo, f, indent=4, sort_keys=True)
 
     # make rawdata folders
     os.mkdir(datadir + "/rawdata_tone_usb")
@@ -246,9 +249,9 @@ def print_data():
 
     # get data
     caldata = np.load(datadir + "/caldata.npz")
-    a2_toneusb = caldata['a2_toneusb']; a2_lsb = caldata['a2_tonelsb']
-    b2_toneusb = caldata['b2_toneusb']; b2_lsb = caldata['b2_tonelsb']
-    ab_toneusb = caldata['ab_toneusb']; ab_lsb = caldata['ab_tonelsb']
+    a2_toneusb = caldata['a2_toneusb']; a2_tonelsb = caldata['a2_tonelsb']
+    b2_toneusb = caldata['b2_toneusb']; b2_tonelsb = caldata['b2_tonelsb']
+    ab_toneusb = caldata['ab_toneusb']; ab_tonelsb = caldata['ab_tonelsb']
 
     # compute ratios
     ab_ratios_usb = ab_toneusb / b2_toneusb

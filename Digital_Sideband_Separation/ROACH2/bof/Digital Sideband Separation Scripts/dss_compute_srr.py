@@ -78,7 +78,7 @@ def main():
     roach.write_int(cnt_rst_reg, 0)
     print("done")
 
-    print("Setting instrumets power and outputs...")
+    print("Setting instruments power and outputs...")
     rf_generator.write("power " + str(rf_power))
     rf_generator.write("outp on")
     print("done")
@@ -154,21 +154,24 @@ def make_data_directory():
     """
     os.mkdir(datadir)
 
-    # make .txt file with test info
-    with open(datadir + "/testinfo.txt", "w") as f:
-        f.write("roach ip:     " + roach_ip         + "\n")
-        f.write("date time:    " + date_time        + "\n")
-        f.write("boffile:      " + boffile          + "\n")
-        f.write("bandwidth:    " + str(bandwidth)   + "\n")
-        f.write("lo freq:      " + str(lo_freq)     + "\n")
-        f.write("nchannels:    " + str(nchannels)   + "\n")
-        f.write("acc len:      " + str(acc_len)     + "\n")
-        f.write("chnl step:    " + str(chnl_step)   + "\n")
-        f.write("rf generator: " + rf_generator_ip  + "\n")
-        f.write("rf power:     " + str(rf_power)    + "\n")
-        f.write("load consts:  " + str(load_consts) + "\n")
-        f.write("load ideal:   " + str(load_ideal)  + "\n")
-        f.write("caldir:       " + str(caldir))
+    # make .json file with test info
+    testinfo = {}
+    testinfo["roach ip"]     = roach_ip
+    testinfo["date time"]    = date_time
+    testinfo["boffile"]      = boffile
+    testinfo["bandwidth"]    = bandwidth
+    testinfo["lo freq"]      = lo_freq
+    testinfo["nchannels"]    = nchannels
+    testinfo["acc len"]      = acc_len
+    testinfo["chnl step"]    = chnl_step
+    testinfo["rf generator"] = rf_generator_ip
+    testinfo["rf power"]     = rf_power
+    testinfo["load consts"]  = load_consts
+    testinfo["load ideal"]   = load_ideal
+    testinfo["caldir"]       = caldir
+
+    with open(datadir + "/testinfo.json", "w") as f:
+        json.dump(testinfo, f, indent=4, sort_keys=True)
 
     # make rawdata folders
     os.mkdir(datadir + "/rawdata_tone_usb")

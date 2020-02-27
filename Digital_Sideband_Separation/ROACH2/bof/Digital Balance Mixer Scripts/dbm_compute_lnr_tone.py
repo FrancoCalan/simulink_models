@@ -4,7 +4,7 @@
 # It then saves the results into a compress folder.
 
 # imports
-import os, corr, time, datetime, tarfile, shutil
+import os, corr, time, datetime, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
@@ -13,7 +13,7 @@ from dbm_load_constants import dbm_load_constants
 # communication parameters
 roach_ip        = '192.168.1.12'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
-rf_generator_ip = '192.168.1.34'
+rf_generator_ip = '192.168.1.31'
 
 # model parameters
 adc_bits        = 8
@@ -29,17 +29,17 @@ bram_lo = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3',
            'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']
 
 # experiment parameters
-lo_freq     = 3000 # MHz
+lo_freq     = 11000 # MHz
 acc_len     = 2**16
-chnl_step   = 8
-rf_power    = -19 #dBm
+chnl_step   = 32
+rf_power    = -10 # dBm
 date_time   =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-datadir     = "bm_lnr_tone " + date_time
+datadir     = "dbm_lnr_tone " + date_time
 pause_time  = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                   # for the spectra to be fully computed after a tone change
 load_consts = True
 load_ideal  = True
-caldir      = None
+caldir      = 'dbm_cal_tone 2020-02-27 17:50:46.tar.gz'
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_rf)
@@ -68,7 +68,7 @@ def main():
     #####################
     # loading calibration constants
     if load_consts:
-        bm_load_constants(roach, load_ideal, 1+0j, caldir)
+        dbm_load_constants(roach, load_ideal, 1+0j, caldir)
 
     print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
@@ -78,7 +78,7 @@ def main():
     roach.write_int(cnt_rst_reg, 0)
     print("done")
 
-    print("Setting instrumets power and outputs...")
+    print("Setting instruments power and outputs...")
     rf_generator.write("power " + str(rf_power))
     rf_generator.write("outp on")
     print("done")
@@ -132,7 +132,7 @@ def create_figure():
     
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
-    ax0.set_ylim((-80, 0))           ; ax1.set_ylim((-80, 0))
+    ax0.set_ylim((-80, 5))           ; ax1.set_ylim((-80, 5))
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')
@@ -154,25 +154,28 @@ def make_data_directory():
     """
     os.mkdir(datadir)
 
-    # make .txt file with test info
-    with open(datadir + "/testinfo.txt", "w") as f:
-        f.write("roach ip:     " + roach_ip         + "\n")
-        f.write("date time:    " + date_time        + "\n")
-        f.write("boffile:      " + boffile          + "\n")
-        f.write("bandwidth:    " + str(bandwidth)   + "\n")
-        f.write("lo freq:      " + str(lo_freq)     + "\n")
-        f.write("nchannels:    " + str(nchannels)   + "\n")
-        f.write("acc len:      " + str(acc_len)     + "\n")
-        f.write("chnl step:    " + str(chnl_step)   + "\n")
-        f.write("rf generator: " + rf_generator_ip  + "\n")
-        f.write("rf power:     " + str(rf_power)    + "\n")
-        f.write("load consts:  " + str(load_consts) + "\n")
-        f.write("load ideal:   " + str(load_ideal)  + "\n")
-        f.write("caldir:       " + str(caldir))
+    # make .json file with test info
+    testinfo = {}
+    testinfo["roach ip"]     = roach_ip
+    testinfo["date time"]    = date_time
+    testinfo["boffile"]      = boffile
+    testinfo["bandwidth"]    = bandwidth
+    testinfo["lo freq"]      = lo_freq
+    testinfo["nchannels"]    = nchannels
+    testinfo["acc len"]      = acc_len
+    testinfo["chnl step"]    = chnl_step
+    testinfo["rf generator"] = rf_generator_ip
+    testinfo["rf power"]     = rf_power
+    testinfo["load consts"]  = load_consts
+    testinfo["load ideal"]   = load_ideal
+    testinfo["caldir"]       = caldir
+
+    with open(datadir + "/testinfo.json", "w") as f:
+        json.dump(testinfo, f, indent=4, sort_keys=True)
 
     # make rawdata folders
-    os.mkdir(datadir + "/rawdata_usb")
-    os.mkdir(datadir + "/rawdata_lsb")
+    os.mkdir(datadir + "/rawdata_tone_usb")
+    os.mkdir(datadir + "/rawdata_tone_lsb")
 
 def get_lnrdata(rf_freqs, tone_sideband):
     """

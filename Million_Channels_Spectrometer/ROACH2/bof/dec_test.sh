@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 plot_spectra.py \
     --ip        192.168.1.15 \
     --bof       dec_test.bof.gz \

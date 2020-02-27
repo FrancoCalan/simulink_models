@@ -1,11 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 synchronize_adc5g.py \
     --ip             192.168.1.12 \
-    --bof            corr2in_2048ch_1520mhz.bof.gz \
+    `#--bof            dss_2048ch_1520mhz.bof.gz` \
     `#--upload` \
-    --genip          192.168.1.34 \
-    --genpow         -10 \
-    --zdok0brams     dout_a2_0 dout_a2_1 dout_a2_2 dout_a2_3 \
+    --genip          192.168.1.31 \
+    --genpow         -18 \
+    --lofreq         12000 \
+   --zdok0brams     dout_a2_0 dout_a2_1 dout_a2_2 dout_a2_3 \
                      dout_a2_4 dout_a2_5 dout_a2_6 dout_a2_7 \
     --zdok1brams     dout_b2_0 dout_b2_1 dout_b2_2 dout_b2_3 \
                      dout_b2_4 dout_b2_5 dout_b2_6 dout_b2_7 \
@@ -17,7 +18,7 @@ synchronize_adc5g.py \
     --datawidth      64 \
     --bandwidth      1080 \
     --countreg       cnt_rst \
-    --accreg         acc_len \
+    --accreg         cal_acc_len \
     --acclen         $((2**16)) \
     --delayregs      adc0_delay adc1_delay \
     --startchnl      1 \

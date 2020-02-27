@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 calibrate_adc5g.py \
     --ip         192.168.1.12 \
     --bof        snap2in.bof.gz \

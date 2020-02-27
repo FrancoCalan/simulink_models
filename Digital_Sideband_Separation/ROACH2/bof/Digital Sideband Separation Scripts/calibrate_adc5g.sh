@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 calibrate_adc5g.py \
     --ip         192.168.1.12 \
     `#--bof        dss_2048ch_1520mhz.bof.gz` \

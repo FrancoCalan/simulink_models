@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 plot_spectra.py \
     --ip        192.168.1.11 \
     --bof       spec2in_4096ch_500mhz.bof \

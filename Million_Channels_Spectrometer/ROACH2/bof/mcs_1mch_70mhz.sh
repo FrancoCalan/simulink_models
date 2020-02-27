@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 plot_spectra.py \
     --ip        192.168.1.15 \
     --bof       mcs_1mch_70mhz.bof.gz \

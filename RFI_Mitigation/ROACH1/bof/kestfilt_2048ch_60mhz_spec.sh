@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 plot_spectra.py \
     --ip        192.168.1.11 \
     --bof       kestfilt_2048ch_60mhz.bof \

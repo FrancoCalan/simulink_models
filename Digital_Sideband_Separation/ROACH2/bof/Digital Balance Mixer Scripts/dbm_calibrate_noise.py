@@ -5,7 +5,7 @@
 # calibration constants with an lnr computation script.
 
 # imports
-import os, time, datetime, tarfile, shutil
+import os, time, datetime, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
@@ -33,7 +33,7 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
               'dout_ab_im4', 'dout_ab_im5', 'dout_ab_im6', 'dout_ab_im7']
 
 # experiment parameters
-lo_freq    = 3000 # MHz
+lo_freq    = 12000 # MHz
 acc_len    = 2**20
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "dbm_cal_noise " + date_time
@@ -115,14 +115,14 @@ def create_figure():
 
     # set magnitude diference axis
     ax2.set_xlim((0, bandwidth))
-    ax2.set_ylim((0, 2))     
+    ax2.set_ylim((0, 4))     
     ax2.grid()                 
     ax2.set_xlabel('Frequency [MHz]')
     ax2.set_ylabel('Mag ratio [lineal]')     
 
     # set magnitude diference axis
     ax3.set_xlim((0, bandwidth))
-    ax3.set_ylim((-180, 180))     
+    ax3.set_ylim((-200, 200))     
     ax3.grid()                 
     ax3.set_xlabel('Frequency [MHz]')
     ax3.set_ylabel('Angle diff [degrees]')
@@ -135,15 +135,18 @@ def make_data_directory():
     """
     os.mkdir(datadir)
 
-    # make .txt file with test info
-    with open(datadir + "/testinfo.txt", "w") as f:
-        f.write("roach ip:  " + roach_ip       + "\n")
-        f.write("date time: " + date_time      + "\n")
-        f.write("boffile:   " + boffile        + "\n")
-        f.write("bandwidth: " + str(bandwidth) + "\n")
-        f.write("lo freq:   " + str(lo_freq)   + "\n")
-        f.write("nchannels: " + str(nchannels) + "\n")
-        f.write("acc len:   " + str(acc_len))
+    # make .json file with test info
+    testinfo = {}
+    testinfo["roach ip"]     = roach_ip
+    testinfo["date time"]    = date_time
+    testinfo["boffile"]      = boffile
+    testinfo["bandwidth"]    = bandwidth
+    testinfo["lo freq"]      = lo_freq
+    testinfo["nchannels"]    = nchannels
+    testinfo["acc len"]      = acc_len
+
+    with open(datadir + "/testinfo.json", "w") as f:
+        json.dump(testinfo, f, indent=4, sort_keys=True)
 
 def get_caldata():
     """
