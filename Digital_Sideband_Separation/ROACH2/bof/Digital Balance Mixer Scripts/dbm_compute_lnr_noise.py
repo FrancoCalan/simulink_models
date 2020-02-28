@@ -58,13 +58,6 @@ def main():
     make_data_directory()
     print("done")
 
-    #####################
-    # Start Measurement #
-    #####################
-    # loading calibration constants
-    if load_consts:
-        dbm_load_constants(roach, load_ideal, 1+0j, caldir)
-
     print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
     print("done")
@@ -73,6 +66,13 @@ def main():
     roach.write_int(cnt_rst_reg, 0)
     print("done")
     
+    #####################
+    # Start Measurement #
+    #####################
+    # loading calibration constants
+    if load_consts:
+        dbm_load_constants(roach, load_ideal, 1+0j, caldir)
+
     print("Getting lnr cold data data...")
     rf_cold, lo_cold = get_lnrdata(line0_0, line1_0)
     print("done")
