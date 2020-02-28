@@ -65,9 +65,6 @@ def main():
     make_data_directory()
     print("done")
 
-    #####################
-    # Start Measurement #
-    #####################
     print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
     print("done")
@@ -81,6 +78,9 @@ def main():
     rf_generator.write("outp on")
     print("done")
 
+    #####################
+    # Start Measurement #
+    #####################
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
     rf_freqs = lo_freq + if_freqs

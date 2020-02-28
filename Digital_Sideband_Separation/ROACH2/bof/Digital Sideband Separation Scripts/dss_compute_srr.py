@@ -63,13 +63,6 @@ def main():
     make_data_directory()
     print("done")
 
-    #####################
-    # Start Measurement #
-    #####################
-    # loading calibration constants
-    if load_consts:
-        dss_load_constants(roach, load_ideal, 0-1j, caldir)
-
     print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
     print("done")
@@ -82,6 +75,13 @@ def main():
     rf_generator.write("power " + str(rf_power))
     rf_generator.write("outp on")
     print("done")
+
+    #####################
+    # Start Measurement #
+    #####################
+    # loading calibration constants
+    if load_consts:
+        dss_load_constants(roach, load_ideal, 0-1j, caldir)
 
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()

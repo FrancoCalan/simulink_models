@@ -61,9 +61,6 @@ def main():
     make_data_directory()
     print("done")
 
-    #####################
-    # Start Measurement #
-    #####################
     print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
     print("done")
@@ -77,6 +74,9 @@ def main():
     time.sleep(1)
     print("done")
 
+    #####################
+    # Start Measurement #
+    #####################
     print("Getting calibration data...")
     a2, b2, ab = get_caldata()
     print("done")
