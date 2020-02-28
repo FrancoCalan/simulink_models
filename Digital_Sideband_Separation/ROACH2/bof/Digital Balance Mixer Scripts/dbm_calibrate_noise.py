@@ -13,6 +13,7 @@ import calandigital as cd
 # communication parameters
 roach_ip        = '192.168.1.12'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
+noise_source_ip = '192.168.1.38'
 
 # model parameters
 adc_bits           = 8
@@ -33,7 +34,7 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
               'dout_ab_im4', 'dout_ab_im5', 'dout_ab_im6', 'dout_ab_im7']
 
 # experiment parameters
-lo_freq    = 12000 # MHz
+lo_freq    = 9000 # MHz
 acc_len    = 2**20
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "dbm_cal_noise " + date_time
@@ -53,6 +54,7 @@ def main():
     start_time = time.time()
 
     roach = cd.initialize_roach(roach_ip)
+    noise_source = cd.Instrument(noise_source_ip)
 
     print("Setting up plotting and data saving elements...")
     fig, line0, line1, line2, line3 = create_figure()
@@ -68,6 +70,11 @@ def main():
     print("Resseting counter registers...")
     roach.write_int(cnt_rst_reg, 1)
     roach.write_int(cnt_rst_reg, 0)
+    print("done")
+
+    print("Turning noise source off...")
+    noise_source.write('OUTPUT CH1,OFF')
+    time.sleep(1)
     print("done")
 
     print("Getting calibration data...")
@@ -195,9 +202,9 @@ def print_data():
 
     # get data
     caldata = np.load(datadir + "/caldata.npz")
-    a2_usb = caldata['a2']
-    b2_usb = caldata['b2']
-    ab_usb = caldata['ab']
+    a2 = caldata['a2']
+    b2 = caldata['b2']
+    ab = caldata['ab']
 
     # compute ratios
     ab_ratios = ab / b2
@@ -209,6 +216,7 @@ def print_data():
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Mag ratio [lineal]')     
     plt.savefig(datadir+'/mag_ratios.pdf')
+    plt.close()
     
     # print angle difference
     plt.figure()
@@ -217,6 +225,7 @@ def print_data():
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Angle diff [degrees]')     
     plt.savefig(datadir+'/angle_diff.pdf')
+    plt.close()
 
 def compress_data():
     """

@@ -14,6 +14,7 @@ from dbm_load_constants import dbm_load_constants
 # communication parameters
 roach_ip        = '192.168.1.12'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
+noise_source_ip = '192.168.1.38'
 
 # model parameters
 adc_bits        = 8
@@ -29,15 +30,15 @@ bram_lo = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3',
            'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']
 
 # experiment parameters
-lo_freq     = 3000 # MHz
+lo_freq     = 9000 # MHz
 acc_len     = 2**20
 date_time   =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir     = "dbm_lnr_noise " + date_time
 pause_time  = 8.0 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                   # for the spectra to be fully computed after a tone change
 load_consts = True
-load_ideal  = True
-caldir      = None
+load_ideal  = False
+caldir      = 'dbm_cal_noise 2020-02-28 19:57:09.tar.gz'
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_rf)
@@ -48,13 +49,15 @@ dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 # Experiment Starts Here #
 ##########################
 def main():
-    global roach, rf_generator, fig, line2
+    global roach, rf_generator, fig, line3
     start_time = time.time()
 
     roach = cd.initialize_roach(roach_ip)
+    noise_source = cd.Instrument(noise_source_ip)
 
     print("Setting up plotting and data saving elements...")
-    fig, line0_cold, line0_hot, line1_cold, line1_hot, line2 = create_figure()
+    fig, lines = create_figure()
+    line3 = lines[6]
     make_data_directory()
     print("done")
 
@@ -68,19 +71,28 @@ def main():
     print("Setting accumulation register to " + str(acc_len) + "...")
     roach.write_int(acc_len_reg, acc_len)
     print("done")
-    print("Resseting counter registers...")
+    print("Reseting counter registers...")
     roach.write_int(cnt_rst_reg, 1)
     roach.write_int(cnt_rst_reg, 0)
     print("done")
     
-    print("Getting lnr cold data data...")
-    rf_cold, lo_cold = get_lnrdata(line0_0, line1_0)
+    print("Turning noise source off...")
+    noise_source.write('OUTPUT CH1,OFF')
+    time.sleep(1)
     print("done")
 
-    raw_input("Change source to hot and press any key...")
+    print("Getting lnr cold data...")
+    rf_cold, lo_cold = get_lnrdata(lines[0], lines[2], lines[4])
+    print("done")
 
-    print("Getting lnr hot data data...")
-    rf_hot, lo_hot = get_lnrdata(line0_1, line1_1)
+    #raw_input("Change source to hot and press any key...")
+    print("Turning noise source on...")
+    noise_source.write('OUTPUT CH1,ON')
+    time.sleep(1)
+    print("done")
+
+    print("Getting lnr hot data...")
+    rf_hot, lo_hot = get_lnrdata(lines[1], lines[3], lines[5])
     print("done")
 
     print("Saving data...")
@@ -105,7 +117,7 @@ def create_figure():
     """
     Creates figure for plotting.
     """
-    fig, [[ax0, ax1], [ax2, _]] = plt.subplots(2,2)
+    fig, [[ax0, ax1], [ax2, ax3]] = plt.subplots(2,2)
     fig.set_tight_layout(True)
     fig.show()
     fig.canvas.draw()
@@ -115,7 +127,9 @@ def create_figure():
     line0_hot,  = ax0.plot([],[], label='hot')
     line1_cold, = ax1.plot([],[], label='cold')
     line1_hot,  = ax1.plot([],[], label='hot')
-    line2,      = ax2.plot([],[])
+    line2_cold, = ax2.plot([],[], label='cold')
+    line2_hot,  = ax2.plot([],[], label='hot')
+    line3,      = ax3.plot([],[])
 
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
@@ -124,17 +138,31 @@ def create_figure():
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')
     ax0.set_title('RF spec')         ; ax1.set_title('LO spec')
-    az0.legend()                     ;ax1.legend()
+    ax0.legend()                     ; ax1.legend()
 
-    # LNR axis
+    # Spec ratios axis
     ax2.set_xlim((0, bandwidth))     
     ax2.set_ylim((0, 80))            
     ax2.grid()                       
     ax2.set_xlabel('Frequency [MHz]')
-    ax2.set_ylabel('LNR [dB]') 
-    ax2.set_title('LNR')         
+    ax2.set_ylabel('Ratio [dB]') 
+    ax2.set_title('Spec Ratios')         
+    ax2.legend()
+
+    # LNR axis
+    ax3.set_xlim((0, bandwidth))     
+    ax3.set_ylim((0, 80))            
+    ax3.grid()                       
+    ax3.set_xlabel('Frequency [MHz]')
+    ax3.set_ylabel('LNR [dB]') 
+    ax3.set_title('LNR')
+
+    lines = [line0_cold, line0_hot, 
+             line1_cold, line1_hot, 
+             line2_cold, line2_hot, 
+             line3]
     
-    return fig, line0_cold, line0_hot, line1_cold, line1_hot, line2
+    return fig, lines
 
 def make_data_directory():
     """
@@ -158,13 +186,14 @@ def make_data_directory():
     with open(datadir + "/testinfo.json", "w") as f:
         json.dump(testinfo, f, indent=4, sort_keys=True)
 
-def get_lnrdata(line0, line1):
+def get_lnrdata(line0, line1, line2):
     """
     Get the lnr data assumimg a broadband noise signal is injected.
     The lnr data is the power of the input after applying the calibration
     constants (rf), and the negative of the constants (lo).    
     :param line0: line for first axis.
     :param line1: line for second axis.
+    :param line1: line for third axis.
     :return: calibration data: a2, b2, and ab.
     """    
     # read data
@@ -201,18 +230,22 @@ def print_data():
     # get data
     lnrdata = np.load(datadir + "/lnrdata.npz")
     rf_cold = lnrdata['rf_cold']; rf_hot = lnrdata['rf_hot']
-    lo_cold = lnrdata['lo_cold']; lo_hot = lnrdata['b2_hot']
+    lo_cold = lnrdata['lo_cold']; lo_hot = lnrdata['lo_hot']
 
     # compute LNR (using formula from Fujii, et al. 2017)
     lnr = (rf_hot - rf_cold) / (lo_hot - lo_cold) + 1
 
     # print LNR
     plt.figure()
-    plt.plot(rf_freqs_usb, 10*np.log10(lnr), 'b')
+    plt.plot(rf_freqs, 10*np.log10(lnr), 'b')
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('LNR [dB]')     
     plt.savefig(datadir+'/lnr.pdf')
+    plt.close()
+
+    # set computed data into live plot
+    line3.set_data(if_freqs, lnr)
     
 def compress_data():
     """

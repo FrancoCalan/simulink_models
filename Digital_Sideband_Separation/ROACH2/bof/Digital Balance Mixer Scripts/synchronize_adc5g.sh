@@ -3,7 +3,7 @@ synchronize_adc5g.py \
     --ip             192.168.1.12 \
     `#--bof            dss_2048ch_1520mhz.bof.gz` \
     `#--upload` \
-    --genip          192.168.1.31 \
+    `#--genip          192.168.1.31` \
     --genpow         -18 \
     --lofreq         12000 \
    --zdok0brams     dout_a2_0 dout_a2_1 dout_a2_2 dout_a2_3 \
@@ -22,5 +22,5 @@ synchronize_adc5g.py \
     --acclen         $((2**16)) \
     --delayregs      adc0_delay adc1_delay \
     --startchnl      1 \
-    --stopchnl       2048 \
-    --chnlstep       32 \
+    --stopchnl       1024 \
+    --chnlstep       16 \
