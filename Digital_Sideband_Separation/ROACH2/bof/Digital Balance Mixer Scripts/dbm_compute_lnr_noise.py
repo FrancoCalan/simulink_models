@@ -37,8 +37,8 @@ datadir     = "dbm_lnr_noise " + date_time
 pause_time  = 8.0 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                   # for the spectra to be fully computed after a tone change
 load_consts = True
-load_ideal  = False
-caldir      = 'dbm_cal_noise 2020-02-28 19:57:09.tar.gz'
+load_ideal  = True
+caldir      = 'dbm_cal_noise 2020-03-04 15:40:19.tar.gz'
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_rf)
@@ -71,6 +71,7 @@ def main():
     
     print("Turning noise source off...")
     noise_source.write('OUTPUT CH1,OFF')
+    #noise_source.write('OUTPUT CH2,OFF')
     time.sleep(1)
 
     #####################
@@ -87,6 +88,7 @@ def main():
     #raw_input("Change source to hot and press any key...")
     print("Turning noise source on...")
     noise_source.write('OUTPUT CH1,ON')
+    #noise_source.write('OUTPUT CH2,ON')
     time.sleep(1)
     print("done")
 

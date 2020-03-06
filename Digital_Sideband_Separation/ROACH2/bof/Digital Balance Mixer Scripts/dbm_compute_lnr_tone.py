@@ -29,7 +29,7 @@ bram_lo = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3',
            'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']
 
 # experiment parameters
-lo_freq     = 11000 # MHz
+lo_freq     = 10000 # MHz
 acc_len     = 2**16
 chnl_step   = 32
 rf_power    = -10 # dBm
@@ -38,8 +38,8 @@ datadir     = "dbm_lnr_tone " + date_time
 pause_time  = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                   # for the spectra to be fully computed after a tone change
 load_consts = True
-load_ideal  = True
-caldir      = 'dbm_cal_tone 2020-02-27 17:50:46.tar.gz'
+load_ideal  = False
+caldir      = 'dbm_cal_noise 2020-03-03 16:48:09.tar.gz'
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_rf)

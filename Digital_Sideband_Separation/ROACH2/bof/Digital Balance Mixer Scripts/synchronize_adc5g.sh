@@ -22,5 +22,5 @@ synchronize_adc5g.py \
     --acclen         $((2**16)) \
     --delayregs      adc0_delay adc1_delay \
     --startchnl      1 \
-    --stopchnl       1024 \
-    --chnlstep       16 \
+    --stopchnl       2048 \
+    --chnlstep       32 \

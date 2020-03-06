@@ -70,7 +70,7 @@ def main():
     print("done")
 
     print("Turning noise source off...")
-    noise_source.write('OUTPUT CH1,OFF')
+    #noise_source.write('OUTPUT CH1,OFF')
     time.sleep(1)
     print("done")
 

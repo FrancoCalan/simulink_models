@@ -34,7 +34,7 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
               'dout_ab_im4', 'dout_ab_im5', 'dout_ab_im6', 'dout_ab_im7']
 
 # experiment parameters
-lo_freq    = 11000 # MHz
+lo_freq    = 10000 # MHz
 acc_len    = 2**16
 chnl_step  = 32
 rf_power   = -10 # dBm
