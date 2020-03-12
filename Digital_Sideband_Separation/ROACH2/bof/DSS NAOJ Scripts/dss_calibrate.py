@@ -91,7 +91,7 @@ def make_pre_measurements_actions():
     rf_generator.write("outp on")
     print("done")
 
-def make_dss_measurements():
+def make_dss_measurements(datadir):
     """
     Makes the measurements for dss calibration.
     """
@@ -114,7 +114,7 @@ def make_dss_measurements():
     print("done")
 
     print("Printing data...")
-    print_data()
+    print_data(datadir)
     print("done")
 
     print("Turning off instruments...")
