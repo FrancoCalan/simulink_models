@@ -5,7 +5,7 @@
 # calibration constants with an srr computation script.
 
 # imports
-import os, time, datetime, tarfile, shutil
+import os, time, datetime, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd

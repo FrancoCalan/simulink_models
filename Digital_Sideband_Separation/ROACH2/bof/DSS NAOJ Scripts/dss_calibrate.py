@@ -6,15 +6,15 @@
 # calibration constants with an srr computation script.
 
 # imports
-import os, time, datetime, tarfile, shutil
+import os, time, datetime, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
 
 # communication parameters
-roach_ip        = '192.168.1.12'
+roach_ip        = '133.40.220.2'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
-rf_generator_ip = '192.168.1.34'
+rf_generator_ip = None
 
 # model parameters
 adc_bits           = 8
@@ -36,9 +36,9 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
 
 # experiment parameters
 lo_freq    = 3000 # MHz
+rf_power   = -50 # dBm
 acc_len    = 2**16
 chnl_step  = 32
-rf_power   = -19 #dBm
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "dss_cal " + date_time
 pause_time = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
@@ -49,15 +49,18 @@ nchannels     = 2**bram_addr_width * len(bram_a2)
 if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False)
 test_channels = range(1, nchannels, chnl_step)
 if_test_freqs = if_freqs[test_channels]
+rf_freqs_usb  = lo_freq + if_freqs
+rf_freqs_lsb  = lo_freq - if_freqs
 dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 
-##########################
-# Experiment Starts Here #
-##########################
 def main():
+    start_time = time.time()
+
     make_pre_measurements_actions()
-    make_dss_measurements()
+    make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb)
     make_post_measurements_actions()
+
+    print("Finished. Total time: " + str(int(time.time() - start_time)) + "[s]")
 
 def make_pre_measurements_actions():
     """
@@ -68,7 +71,6 @@ def make_pre_measurements_actions():
     - turning on generator power
     """
     global roach, rf_generator, fig, line0, line1, line2, line3
-    start_time = time.time()
 
     roach = cd.initialize_roach(roach_ip)
     rf_generator = cd.Instrument(rf_generator_ip)
@@ -91,20 +93,21 @@ def make_pre_measurements_actions():
     rf_generator.write("outp on")
     print("done")
 
-def make_dss_measurements(datadir):
+def make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb):
     """
     Makes the measurements for dss calibration.
+    :param datadir: directory where to save the data.
+    :param rf_freqs_usb: rf frequencies to measure in usb.
+    :param rf_freqs_lsb: rf frequencies to measure in lsb.
     """
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
-    rf_freqs = lo_freq + if_freqs
-    a2_toneusb, b2_toneusb, ab_toneusb = get_caldata(rf_freqs, "usb")
+    a2_toneusb, b2_toneusb, ab_toneusb = get_caldata(rf_freqs_usb, "usb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
         
     print("Starting tone sweep in lower sideband...")
     sweep_time = time.time()
-    rf_freqs = lo_freq - if_freqs
-    a2_tonelsb, b2_tonelsb, ab_tonelsb = get_caldata(rf_freqs, "lsb")
+    a2_tonelsb, b2_tonelsb, ab_tonelsb = get_caldata(rf_freqs_lsb, "lsb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
 
     print("Saving data...")
@@ -117,6 +120,12 @@ def make_dss_measurements(datadir):
     print_data(datadir)
     print("done")
 
+def make_post_measurements_actions():
+    """
+    Makes all the actions required after measurements:
+    - turn off sources
+    - compress data
+    """
     print("Turning off instruments...")
     rf_generator.write("outp off")
     print("done")
@@ -124,8 +133,6 @@ def make_dss_measurements(datadir):
     print("Compressing data...")
     compress_data()
     print("done")
-
-    print("Finished. Total time: " + str(int(time.time() - start_time)) + "[s]")
 
 def create_figure():
     """
@@ -159,7 +166,7 @@ def create_figure():
 
     # set magnitude diference axis
     ax3.set_xlim((0, bandwidth))
-    ax3.set_ylim((-180, 180))     
+    ax3.set_ylim((-200, 200))     
     ax3.grid()                 
     ax3.set_xlabel('Frequency [MHz]')
     ax3.set_ylabel('Angle diff [degrees]')
@@ -174,16 +181,16 @@ def make_data_directory():
 
     # make .json file with test info
     testinfo = {}
-    testinfo["roach ip"]     = roach_ip
-    testinfo["date time"]    = date_time
-    testinfo["boffile"]      = boffile
-    testinfo["bandwidth"]    = bandwidth
-    testinfo["lo freq"]      = lo_freq
-    testinfo["nchannels"]    = nchannels
-    testinfo["acc len"]      = acc_len
-    testinfo["chnl step"]    = chnl_step
-    testinfo["rf generator"] = rf_generator_ip
-    testinfo["rf power"]     = rf_power
+    testinfo["roach ip"]        = roach_ip
+    testinfo["date time"]       = date_time
+    testinfo["boffile"]         = boffile
+    testinfo["bandwidth"]       = bandwidth
+    testinfo["nchannels"]       = nchannels
+    testinfo["acc len"]         = acc_len
+    testinfo["chnl step"]       = chnl_step
+    testinfo["lo freq"]         = lo_freq
+    testinfo["rf generator ip"] = rf_generator_ip
+    testinfo["rf power"]        = rf_power
 
     with open(datadir + "/testinfo.json", "w") as f:
         json.dump(testinfo, f, indent=4, sort_keys=True)
@@ -253,14 +260,11 @@ def get_caldata(rf_freqs, tone_sideband):
 
     return a2_arr, b2_arr, ab_arr
 
-def print_data():
+def print_data(datadir):
     """
     Print the saved data to .pdf images for an easy check.
+    :param datadir: directory where to save the image.
     """
-    # get rf frequencies
-    rf_freqs_usb = lo_freq + if_freqs
-    rf_freqs_lsb = lo_freq - if_freqs
-
     # get data
     caldata = np.load(datadir + "/caldata.npz")
     a2_toneusb = caldata['a2_toneusb']; a2_tonelsb = caldata['a2_tonelsb']

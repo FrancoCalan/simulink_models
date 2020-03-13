@@ -1,19 +1,20 @@
+#!/usr/bin/python
 # Script for SRR computation of digital sideband separating receiver. Computes 
 # the Sideband Rejection Ratio by sweeping a tone through the bandwidth of a 
 # calibrated model.
 # It then saves the results into a compress folder.
 
 # imports
-import os, corr, time, datetime, tarfile, shutil
+import os, corr, time, datetime, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
 from dss_load_constants import dss_load_constants
 
 # communication parameters
-roach_ip        = '192.168.1.12'
+roach_ip        = '133.40.220.2'
 boffile         = 'dss_2048ch_1520mhz.bof.gz'
-rf_generator_ip = '192.168.1.34'
+rf_generator_ip = None
 
 # model parameters
 adc_bits        = 8
@@ -30,28 +31,43 @@ bram_lsb = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3',
 
 # experiment parameters
 lo_freq     = 3000 # MHz
+rf_power    = -50 # dBm
 acc_len     = 2**16
-chnl_step   = 4
-rf_power    = -19 #dBm
+chnl_step   = 32
 date_time   =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir     = "dss_srr " + date_time
 pause_time  = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
                   # for the spectra to be fully computed after a tone change
 load_consts = True
 load_ideal  = False
-caldir      = 'dss_cal 2020-02-26 16:59:16.tar.gz'
+caldir      = 'dss_cal 2020-03-13 18:26:34.tar.gz'
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_lsb)
 if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False)
 test_channels = range(1, nchannels, chnl_step)
 if_test_freqs = if_freqs[test_channels]
+rf_freqs_usb  = lo_freq + if_freqs
+rf_freqs_lsb  = lo_freq - if_freqs
 dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)                
 
-##########################
-# Experiment Starts Here #
-##########################
 def main():
+    start_time = time.time()
+
+    make_pre_measurements_actions()
+    make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb)
+    make_post_measurements_actions()
+
+    print("Finished. Total time: " + str(int(time.time() - start_time)) + "[s]")
+
+def make_pre_measurements_actions():
+    """
+    Makes all the actions in preparation for the measurements:
+    - initizalize ROACH and generator communications.
+    - creating plotting and data saving elements
+    - setting initial registers in FPGA
+    - turning on generator power
+    """
     global roach, rf_generator, fig, line0, line1, line2, line3
     start_time = time.time()
 
@@ -76,28 +92,26 @@ def main():
     rf_generator.write("outp on")
     print("done")
 
-    #####################
-    # Start Measurement #
-    #####################
+def make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb):
+    """
+    Makes the measurements for dss calibration.
+    :param datadir: directory where to save the data.
+    :param rf_freqs_usb: rf frequencies to measure in usb.
+    :param rf_freqs_lsb: rf frequencies to measure in lsb.
+    """
     # loading calibration constants
     if load_consts:
         dss_load_constants(roach, load_ideal, 0-1j, caldir)
 
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
-    rf_freqs = lo_freq + if_freqs
-    usb_toneusb, lsb_toneusb = get_srrdata(rf_freqs, "usb")
+    usb_toneusb, lsb_toneusb = get_srrdata(rf_freqs_usb, "usb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
         
     print("Starting tone sweep in lower sideband...")
     sweep_time = time.time()
-    rf_freqs = lo_freq - if_freqs
-    usb_tonelsb, lsb_tonelsb = get_srrdata(rf_freqs, "lsb")
+    usb_tonelsb, lsb_tonelsb = get_srrdata(rf_freqs_lsb, "lsb")
     print("done (" +str(int(time.time() - sweep_time)) + "[s])")
-
-    print("Turning off instruments...")
-    rf_generator.write("outp off")
-    print("done")
 
     print("Saving data...")
     np.savez(datadir+"/srrdata", 
@@ -106,14 +120,22 @@ def main():
     print("done")
 
     print("Printing data...")
-    print_data()
+    print_data(datadir)
+    print("done")
+
+def make_post_measurements_actions():
+    """
+    Makes all the actions required after measurements:
+    - turn off sources
+    - compress data
+    """
+    print("Turning off instruments...")
+    rf_generator.write("outp off")
     print("done")
 
     print("Compressing data...")
     compress_data()
     print("done")
-
-    print("Finished. Total time: " + str(int(time.time() - start_time)) + "[s]")
 
 def create_figure():
     """
@@ -156,19 +178,19 @@ def make_data_directory():
 
     # make .json file with test info
     testinfo = {}
-    testinfo["roach ip"]     = roach_ip
-    testinfo["date time"]    = date_time
-    testinfo["boffile"]      = boffile
-    testinfo["bandwidth"]    = bandwidth
-    testinfo["lo freq"]      = lo_freq
-    testinfo["nchannels"]    = nchannels
-    testinfo["acc len"]      = acc_len
-    testinfo["chnl step"]    = chnl_step
-    testinfo["rf generator"] = rf_generator_ip
-    testinfo["rf power"]     = rf_power
-    testinfo["load consts"]  = load_consts
-    testinfo["load ideal"]   = load_ideal
-    testinfo["caldir"]       = caldir
+    testinfo["roach ip"]        = roach_ip
+    testinfo["date time"]       = date_time
+    testinfo["boffile"]         = boffile
+    testinfo["bandwidth"]       = bandwidth
+    testinfo["lo freq"]         = lo_freq
+    testinfo["nchannels"]       = nchannels
+    testinfo["acc len"]         = acc_len
+    testinfo["chnl step"]       = chnl_step
+    testinfo["rf generator ip"] = rf_generator_ip
+    testinfo["rf power"]        = rf_power
+    testinfo["load consts"]     = load_consts
+    testinfo["load ideal"]      = load_ideal
+    testinfo["caldir"]          = caldir
 
     with open(datadir + "/testinfo.json", "w") as f:
         json.dump(testinfo, f, indent=4, sort_keys=True)
@@ -237,14 +259,11 @@ def get_srrdata(rf_freqs, tone_sideband):
 
     return usb_arr, lsb_arr
 
-def print_data():
+def print_data(datadir):
     """
     Print the saved data to .pdf images for an easy check.
+    :param datadir: directory where to save the image.
     """
-    # get rf frequencies
-    rf_freqs_usb = lo_freq + if_freqs
-    rf_freqs_lsb = lo_freq - if_freqs
-
     # get data
     srrdata = np.load(datadir + "/srrdata.npz")
     usb_toneusb = srrdata['usb_toneusb']; lsb_toneusb = srrdata['lsb_toneusb']

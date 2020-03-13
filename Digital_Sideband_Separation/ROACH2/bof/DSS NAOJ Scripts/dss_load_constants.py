@@ -86,8 +86,8 @@ def compute_consts(caldir):
     b2_toneusb = caldata['b2_toneusb']; b2_tonelsb = caldata['b2_tonelsb']
     ab_toneusb = caldata['ab_toneusb']; ab_tonelsb = caldata['ab_tonelsb']
 
-    # consts usb are computed with tone in lsb, because you want to cancel out lsb,
-    # the same for consts lsb
+    # consts usb are computed with tone in lsb, because you want to cancel out 
+    # lsb, the same for consts lsb
     consts_usb =         -1 * ab_tonelsb  / b2_tonelsb #  ab*   / bb* = a/b
     consts_lsb = -1 * np.conj(ab_toneusb) / a2_toneusb # (ab*)* / aa* = a*b / aa* = b/a
 
