@@ -57,9 +57,9 @@ def main():
     start_time = time.time()
 
     make_pre_measurements_actions()
-    make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb)
+    make_dss_measurements()
     make_post_measurements_actions()
-
+    
     print("Finished. Total time: " + str(int(time.time() - start_time)) + "[s]")
 
 def make_pre_measurements_actions():
@@ -70,13 +70,13 @@ def make_pre_measurements_actions():
     - setting initial registers in FPGA
     - turning on generator power
     """
-    global roach, rf_generator, fig, line0, line1, line2, line3
+    global roach, rf_generator, fig, lines
 
     roach = cd.initialize_roach(roach_ip)
     rf_generator = cd.Instrument(rf_generator_ip)
 
     print("Setting up plotting and data saving elements...")
-    fig, line0, line1, line2, line3 = create_figure()
+    fig, lines = create_figure()
     make_data_directory()
     print("done")
 
@@ -93,12 +93,9 @@ def make_pre_measurements_actions():
     rf_generator.write("outp on")
     print("done")
 
-def make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb):
+def make_dss_measurements():
     """
     Makes the measurements for dss calibration.
-    :param datadir: directory where to save the data.
-    :param rf_freqs_usb: rf frequencies to measure in usb.
-    :param rf_freqs_lsb: rf frequencies to measure in lsb.
     """
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
@@ -117,7 +114,7 @@ def make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb):
     print("done")
 
     print("Printing data...")
-    print_data(datadir)
+    print_data()
     print("done")
 
 def make_post_measurements_actions():
@@ -148,6 +145,7 @@ def create_figure():
     line1, = ax1.plot([],[])
     line2, = ax2.plot([],[])
     line3, = ax3.plot([],[])
+    lines  = [line0, line1, line2, line3] 
     
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
@@ -171,7 +169,7 @@ def create_figure():
     ax3.set_xlabel('Frequency [MHz]')
     ax3.set_ylabel('Angle diff [degrees]')
 
-    return fig, line0, line1, line2, line3
+    return fig, lines
 
 def make_data_directory():
     """
@@ -242,10 +240,10 @@ def get_caldata(rf_freqs, tone_sideband):
         ab_ratios = np.divide(ab_arr, b2_arr)
 
         # plot data
-        line0.set_data(if_freqs, a2_plot)
-        line1.set_data(if_freqs, b2_plot)
-        line2.set_data(if_test_freqs[:i+1], np.abs(ab_ratios))
-        line3.set_data(if_test_freqs[:i+1], np.angle(ab_ratios, deg=True))
+        lines[0].set_data(if_freqs, a2_plot)
+        lines[1].set_data(if_freqs, b2_plot)
+        lines[2].set_data(if_test_freqs[:i+1], np.abs(ab_ratios))
+        lines[3].set_data(if_test_freqs[:i+1], np.angle(ab_ratios, deg=True))
         fig.canvas.draw()
         fig.canvas.flush_events()
         
@@ -260,10 +258,9 @@ def get_caldata(rf_freqs, tone_sideband):
 
     return a2_arr, b2_arr, ab_arr
 
-def print_data(datadir):
+def print_data():
     """
     Print the saved data to .pdf images for an easy check.
-    :param datadir: directory where to save the image.
     """
     # get data
     caldata = np.load(datadir + "/caldata.npz")

@@ -55,7 +55,7 @@ def main():
     start_time = time.time()
 
     make_pre_measurements_actions()
-    make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb)
+    make_dss_measurements()
     make_post_measurements_actions()
 
     print("Finished. Total time: " + str(int(time.time() - start_time)) + "[s]")
@@ -68,14 +68,14 @@ def make_pre_measurements_actions():
     - setting initial registers in FPGA
     - turning on generator power
     """
-    global roach, rf_generator, fig, line0, line1, line2, line3
+    global roach, rf_generator, fig, lines
     start_time = time.time()
 
     roach = cd.initialize_roach(roach_ip)
     rf_generator = cd.Instrument(rf_generator_ip)
 
     print("Setting up plotting and data saving elements...")
-    fig, line0, line1, line2, line3 = create_figure()
+    fig, lines = create_figure()
     make_data_directory()
     print("done")
 
@@ -92,12 +92,9 @@ def make_pre_measurements_actions():
     rf_generator.write("outp on")
     print("done")
 
-def make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb):
+def make_dss_measurements():
     """
     Makes the measurements for dss calibration.
-    :param datadir: directory where to save the data.
-    :param rf_freqs_usb: rf frequencies to measure in usb.
-    :param rf_freqs_lsb: rf frequencies to measure in lsb.
     """
     # loading calibration constants
     if load_consts:
@@ -120,7 +117,7 @@ def make_dss_measurements(datadir, rf_freqs_usb, rf_freqs_lsb):
     print("done")
 
     print("Printing data...")
-    print_data(datadir)
+    print_data()
     print("done")
 
 def make_post_measurements_actions():
@@ -151,6 +148,7 @@ def create_figure():
     line1, = ax1.plot([],[])
     line2, = ax2.plot([],[])
     line3, = ax3.plot([],[])
+    lines  = [line0, line1, line2, line3] 
     
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
@@ -168,7 +166,7 @@ def create_figure():
     ax2.set_ylabel('SRR [dB]')       ; ax3.set_ylabel('SRR [dB]') 
     ax2.set_title('SRR USB')         ; ax3.set_title('SRR LSB')         
 
-    return fig, line0, line1, line2, line3
+    return fig, lines
 
 def make_data_directory():
     """
@@ -240,11 +238,11 @@ def get_srrdata(rf_freqs, tone_sideband):
             srr = np.divide(lsb_arr, usb_arr)
 
         # define sb plot line
-        line_sb = line2 if tone_sideband=='usb' else line3
+        line_sb = line[2] if tone_sideband=='usb' else line[3]
 
         # plot data
-        line0.set_data(if_freqs, usb_plot)
-        line1.set_data(if_freqs, lsb_plot)
+        line[0].set_data(if_freqs, usb_plot)
+        line[1].set_data(if_freqs, lsb_plot)
         line_sb.set_data(if_test_freqs[:i+1], 10*np.log10(srr))
         fig.canvas.draw()
         fig.canvas.flush_events()
@@ -259,10 +257,9 @@ def get_srrdata(rf_freqs, tone_sideband):
 
     return usb_arr, lsb_arr
 
-def print_data(datadir):
+def print_data():
     """
     Print the saved data to .pdf images for an easy check.
-    :param datadir: directory where to save the image.
     """
     # get data
     srrdata = np.load(datadir + "/srrdata.npz")
