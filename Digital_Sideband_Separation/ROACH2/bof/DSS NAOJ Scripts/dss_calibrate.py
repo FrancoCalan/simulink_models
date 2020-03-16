@@ -149,7 +149,7 @@ def create_figure():
     
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
-    ax0.set_ylim((-80, 0))           ; ax1.set_ylim((-80, 0))
+    ax0.set_ylim((-80, 5))           ; ax1.set_ylim((-80, 5))
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')

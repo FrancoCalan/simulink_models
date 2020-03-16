@@ -43,22 +43,26 @@ if __name__ == '__main__':
         from caldir.")
     parser.add_argument("-ic", "--ideal_const", dest="ideal_const", default="0+1j",
         help="Ideal constant to load value to load.")
-    parser.add_argument("-cd", "--caldir", dest="caldir",
-        help="Directory from where extract the calibration constants. \
-        Assumes it is compressed in .tar.gz format.")
+    parser.add_argument("-ct", "--caltar", dest="caltar",
+        help=".tar.gz file from where extract the calibration constants.")
+    parser.add_argument("-cd", "--caldir", dest="caldir", default="",
+        help="Directory within the .tar.gz file where th constants are \
+        located. Must end in / if not empty.")
     args = parser.parse_args()
 
     roach = cd.initialize_roach(args.ip, boffile=args.boffile, upload=args.upload)
-    bm_load_constants(roach, args.load_ideal, complex(args.ideal_const), args.caldir)
+    bm_load_constants(roach, args.load_ideal, complex(args.ideal_const), 
+        args.caltar, args.caldir)
 
-def dss_load_constants(roach, load_ideal, ideal_const=0+1j, caldir=""):
+def dss_load_constants(roach, load_ideal, ideal_const=0+1j, caltar="", caldir=""):
     """
     Load load digital sideband separation constants.
     :param roach: FpgaClient object to communicate with roach.
     :param load_ideal: if True, load ideal constant, else use calibration 
         constants from caldir.
     :param ideal_const: ideal constant value to load.
-    :param caldir: .tar.gz directory with the calibration data.
+    :param caltar: .tar.gz file with the calibration data.
+    :param caldir: directory with the calibration data within the tar file.
     """
     if load_ideal:
         print("Using ideal constant " + str(ideal_const) + ".")
@@ -66,20 +70,21 @@ def dss_load_constants(roach, load_ideal, ideal_const=0+1j, caldir=""):
         consts_lsb = ideal_const * np.ones(nchannels, dtype=np.complex64)
     else: # use calibrated constants
         print("Using constants from calibration directory.")
-        consts_lsb, consts_usb = compute_consts(caldir)
+        consts_lsb, consts_usb = compute_consts(caltar, caldir)
 
     print("Loading constants...")
     load_comp_constants(roach, consts_usb, bram_consts_usb_re, bram_consts_usb_im)
     load_comp_constants(roach, consts_lsb, bram_consts_lsb_re, bram_consts_lsb_im)
     print("done")
 
-def compute_consts(caldir):
+def compute_consts(caltar, caldir):
     """
     Compute constants using tone calibration info.
+    :param caltar: calibration .tar.gz file.
     :param caldir: calibration directory.
     :return: calibration constants.
     """
-    caldata = get_caldata(caldir)
+    caldata = get_caldata(caltar, caldir)
     
     # get arrays
     a2_toneusb = caldata['a2_toneusb']; a2_tonelsb = caldata['a2_tonelsb']
@@ -93,12 +98,12 @@ def compute_consts(caldir):
 
     return consts_lsb, consts_usb
 
-def get_caldata(datadir):
+def get_caldata(datatar, datadir):
     """
     Extract calibration data from directory compressed as .tar.gz.
     """
-    tar_file = tarfile.open(datadir)
-    caldata = np.load(tar_file.extractfile('caldata.npz'))
+    tar_file = tarfile.open(datatar)
+    caldata = np.load(tar_file.extractfile(datadir+'caldata.npz'))
 
     return caldata
 

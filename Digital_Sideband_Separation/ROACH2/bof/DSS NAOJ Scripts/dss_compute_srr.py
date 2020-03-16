@@ -5,7 +5,7 @@
 # It then saves the results into a compress folder.
 
 # imports
-import os, corr, time, datetime, tarfile, shutil, json
+import os, time, datetime, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
@@ -40,7 +40,7 @@ pause_time  = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order
                   # for the spectra to be fully computed after a tone change
 load_consts = True
 load_ideal  = False
-caldir      = 'dss_cal 2020-03-16 10:36:22.tar.gz'
+caltar      = 'dss_cal 2020-03-16 16:46:52.tar.gz'
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_lsb)
@@ -69,7 +69,6 @@ def make_pre_measurements_actions():
     - turning on generator power
     """
     global roach, rf_generator, fig, lines
-    start_time = time.time()
 
     roach = cd.initialize_roach(roach_ip)
     rf_generator = cd.Instrument(rf_generator_ip)
@@ -98,7 +97,7 @@ def make_dss_measurements():
     """
     # loading calibration constants
     if load_consts:
-        dss_load_constants(roach, load_ideal, 0-1j, caldir)
+        dss_load_constants(roach, load_ideal, 0-1j, caltar)
 
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
@@ -179,16 +178,16 @@ def make_data_directory():
     testinfo["roach ip"]        = roach_ip
     testinfo["date time"]       = date_time
     testinfo["boffile"]         = boffile
-    testinfo["bandwidth mhz"    = bandwidth
-    testinfo["lo freq"]         = lo_freq
+    testinfo["bandwidth mhz"]   = bandwidth
     testinfo["nchannels"]       = nchannels
     testinfo["acc len"]         = acc_len
     testinfo["chnl step"]       = chnl_step
+    testinfo["lo freq mhz"]     = lo_freq
     testinfo["rf generator ip"] = rf_generator_ip
     testinfo["rf power dbm"]    = rf_power
     testinfo["load consts"]     = load_consts
     testinfo["load ideal"]      = load_ideal
-    testinfo["caldir"]          = caldir
+    testinfo["caltar"]          = caltar
 
     with open(datadir + "/testinfo.json", "w") as f:
         json.dump(testinfo, f, indent=4, sort_keys=True)
@@ -266,7 +265,7 @@ def print_data():
     usb_toneusb = srrdata['usb_toneusb']; lsb_toneusb = srrdata['lsb_toneusb']
     usb_tonelsb = srrdata['usb_tonelsb']; lsb_tonelsb = srrdata['lsb_tonelsb']
 
-    # compute ratios
+    # compute SRR
     srr_usb = usb_toneusb / lsb_toneusb
     srr_lsb = lsb_tonelsb / usb_tonelsb
 
