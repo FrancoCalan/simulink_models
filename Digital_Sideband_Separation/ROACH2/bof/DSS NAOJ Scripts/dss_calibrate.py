@@ -46,11 +46,11 @@ pause_time = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_a2)
-if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False)
+if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False) # MHz
 test_channels = range(1, nchannels, chnl_step)
-if_test_freqs = if_freqs[test_channels]
-rf_freqs_usb  = lo_freq + if_freqs
-rf_freqs_lsb  = lo_freq - if_freqs
+if_test_freqs = if_freqs[test_channels] # MHz
+rf_freqs_usb  = lo_freq + if_freqs # MHz
+rf_freqs_lsb  = lo_freq - if_freqs # MHz
 dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 
 def main():
@@ -182,13 +182,13 @@ def make_data_directory():
     testinfo["roach ip"]        = roach_ip
     testinfo["date time"]       = date_time
     testinfo["boffile"]         = boffile
-    testinfo["bandwidth"]       = bandwidth
+    testinfo["bandwidth mhz"]   = bandwidth
     testinfo["nchannels"]       = nchannels
     testinfo["acc len"]         = acc_len
     testinfo["chnl step"]       = chnl_step
-    testinfo["lo freq"]         = lo_freq
+    testinfo["lo freq mhz"]     = lo_freq
     testinfo["rf generator ip"] = rf_generator_ip
-    testinfo["rf power"]        = rf_power
+    testinfo["rf power dbm"]    = rf_power
 
     with open(datadir + "/testinfo.json", "w") as f:
         json.dump(testinfo, f, indent=4, sort_keys=True)
@@ -275,7 +275,7 @@ def print_data():
     # print magnitude ratios
     plt.figure()
     plt.plot(rf_freqs_usb, np.abs(ab_ratios_usb), 'b')
-    plt.plot(rf_freqs_lsb, np.abs(ab_ratios_lsb), 'b')
+    plt.plot(rf_freqs_lsb, np.abs(ab_ratios_lsb), 'r')
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Mag ratio [lineal]')     
@@ -284,7 +284,7 @@ def print_data():
     # print angle difference
     plt.figure()
     plt.plot(rf_freqs_usb, np.angle(ab_ratios_usb, deg=True), 'b')
-    plt.plot(rf_freqs_lsb, np.angle(ab_ratios_lsb, deg=True), 'b')
+    plt.plot(rf_freqs_lsb, np.angle(ab_ratios_lsb, deg=True), 'r')
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Angle diff [degrees]')     

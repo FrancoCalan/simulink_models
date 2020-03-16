@@ -34,13 +34,19 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
               'dout_ab_im4', 'dout_ab_im5', 'dout_ab_im6', 'dout_ab_im7']
 
 # experiment parameters
-lo1_freqs = range(4, 20, 1) # GHz
-lo2_freqs = range(275, 500, 16) # GHz
-lo1_power = -50 # dBm
-lo2_power = -50 # dBm
+# band 7 parameters
+lo1_freqs  = np.arange(275+20, 373, 16) # GHz
+lo1_mult   = 3
+# band 8 parameters
+#lo1_freqs  = np.arange(385+20, 500, 16) # GHz
+#lo1_mult   = 6
+#
+lo2_freqs  = np.arange(4, 20, 10) # GHz
+lo1_power  = -50 # dBm
+lo2_power  = -50 # dBm
 rf_power   = -50 # dBm
 acc_len    = 2**16
-chnl_step  = 32
+chnl_step  = 512
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "dss_cal " + date_time
 pause_time = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
@@ -48,9 +54,9 @@ pause_time = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_a2)
-if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False)
+if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False) # MHz
 test_channels = range(1, nchannels, chnl_step)
-if_test_freqs = if_freqs[test_channels]
+if_test_freqs = if_freqs[test_channels] # MHz
 dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
 
 def main():
@@ -92,6 +98,7 @@ def make_pre_measurements_actions():
     
     print("Setting instruments power and outputs...")
     lo1_generator.write("power " + str(lo1_power))
+    lo1_generator.write("freq mult " + str(lo1_mult))
     lo2_generator.write("power " + str(lo2_power))
     rf_generator.write("power " + str(rf_power))
     lo1_generator.write("outp on")
@@ -110,21 +117,27 @@ def make_dss_multilo_measurements():
         for lo2_freq in lo2_freqs:
             # set lo2 frequency (must be in Hz)
             lo2_generator.ask("freq " + str(lo2_freq*1e9) + ";*opc?")
+
+            # print setting
+            print("Current LOs: LO1:" + str(lo1_freq) + "GHz," +
+                              " LO2:" + str(lo2_freq) + "GHz")
             
             # make measurement subdirectory
             measname = "lo1_" + str(lo1_freq) + "ghz_lo2_" + \
                                 str(lo2_freq) + "ghz"
             measdir = datadir + "/" + measname
             os.mkdir(measdir)
+            os.mkdir(measdir + "/rawdata_tone_usb")
+            os.mkdir(measdir + "/rawdata_tone_lsb")
             
             # compute rf frequencies
-            rf_freqs_usb = lo1_freq + lo2_freq + if_freqs
-            rf_freqs_lsb = lo1_freq - lo2_freq - if_freqs
+            rf_freqs_usb = lo1_freq + lo2_freq + (if_freqs/1e3) # GHz
+            rf_freqs_lsb = lo1_freq - lo2_freq - (if_freqs/1e3) # GHz
 
             # make measurement
             make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb)
 
-    print_mutlilo_data()
+    print_multilo_data()
 
 def make_post_measurements_actions():
     """
@@ -193,18 +206,18 @@ def make_data_directory():
     testinfo["roach ip"]         = roach_ip
     testinfo["date time"]        = date_time
     testinfo["boffile"]          = boffile
-    testinfo["bandwidth"]        = bandwidth
+    testinfo["bandwidth mhz"]    = bandwidth
     testinfo["nchannels"]        = nchannels
     testinfo["acc len"]          = acc_len
     testinfo["chnl step"]        = chnl_step
     testinfo["lo1 generator ip"] = lo1_generator_ip
     testinfo["lo2 generator ip"] = lo2_generator_ip
-    testinfo["lo1 freqs"]        = str(lo1_freqs)
-    testinfo["lo2 freqs"]        = str(lo2_freqs)
-    testinfo["lo1 power"]        = lo1_power
-    testinfo["lo2 power"]        = lo2_power
+    testinfo["lo1 freqs ghz"]    = str(lo1_freqs)
+    testinfo["lo2 freqs ghz"]    = str(lo2_freqs)
+    testinfo["lo1 power dbm"]    = lo1_power
+    testinfo["lo2 power dbm"]    = lo2_power
     testinfo["rf generator ip"]  = rf_generator_ip
-    testinfo["rf power"]         = rf_power
+    testinfo["rf power dbm"]     = rf_power
 
     with open(datadir + "/testinfo.json", "w") as f:
         json.dump(testinfo, f, indent=4, sort_keys=True)
@@ -214,8 +227,8 @@ def make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb):
     Makes the measurements for dss calibration for a single set of LOs.
     :param measdir: directory where to save the data of this measurement
         (sub directory of main datadir).
-    :param rf_freqs_usb: rf frequencies to measure in usb.
-    :param rf_freqs_lsb: rf frequencies to measure in lsb.
+    :param rf_freqs_usb: rf frequencies to measure in usb (GHz).
+    :param rf_freqs_lsb: rf frequencies to measure in lsb (GHz).
     """
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
@@ -237,7 +250,7 @@ def make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb):
     print_data(measdir)
     print("done")
 
-def get_caldata(measdi, rf_freqs, tone_sideband):
+def get_caldata(measdir, rf_freqs, tone_sideband):
     """
     Sweep a tone through a sideband and get the calibration data.
     The calibration data is the power of each tone in both inputs (a and b)
@@ -245,7 +258,7 @@ def get_caldata(measdi, rf_freqs, tone_sideband):
     The full sprecta measured for each tone is saved to data for debugging
     purposes.
     :param measdir: directory where to save the raw data.
-    :param rf_freqs: frequencies of the tones to perform the sweep.
+    :param rf_freqs: frequencies of the tones to perform the sweep (GHz).
     :param tone_sideband: sideband of the injected test tone. Either USB or LSB
     :return: calibration data: a2, b2, and ab.
     """
@@ -255,7 +268,7 @@ def get_caldata(measdi, rf_freqs, tone_sideband):
     for i, chnl in enumerate(test_channels):
         # set test tone
         freq = rf_freqs[chnl]
-        rf_generator.ask("freq " + str(freq*1e6) + ";*opc?") # freq must be in Hz
+        rf_generator.ask("freq " + str(freq*1e9) + ";*opc?") # freq must be in Hz
         time.sleep(pause_time)
 
         # read data
@@ -311,43 +324,68 @@ def print_data(measdir):
     b2_toneusb = caldata['b2_toneusb']; b2_tonelsb = caldata['b2_tonelsb']
     ab_toneusb = caldata['ab_toneusb']; ab_tonelsb = caldata['ab_tonelsb']
 
+    # compute power levels
+    pow_usb = cd.scale_and_dBFS_specdata(a2_toneusb, acc_len, dBFS)
+    pow_lsb = cd.scale_and_dBFS_specdata(b2_tonelsb, acc_len, dBFS)
+
     # compute ratios
     ab_ratios_usb = ab_toneusb / b2_toneusb
     ab_ratios_lsb = ab_tonelsb / b2_tonelsb
 
+    # print power level
+    plt.figure()
+    plt.plot(if_freqs, pow_usb, 'b', label="USB")
+    plt.plot(if_freqs, pow_lsb, 'r', label="LSB")
+    plt.grid()                 
+    plt.xlabel('Frequency [MHz]')
+    plt.ylabel('Power [dBFS]')
+    plt.legend()
+    plt.savefig(measdir+'/power_lev.pdf')
+    plt.close()
+
     # print magnitude ratios
     plt.figure()
-    plt.plot(rf_freqs_usb, np.abs(ab_ratios_usb), 'b')
-    plt.plot(rf_freqs_lsb, np.abs(ab_ratios_lsb), 'b')
+    plt.plot(if_freqs, np.abs(ab_ratios_usb), 'b', label="USB")
+    plt.plot(if_freqs, np.abs(ab_ratios_lsb), 'r', label="LSB")
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Mag ratio [lineal]')     
-    plt.savefig(datadir+'/mag_ratios.pdf')
+    plt.legend()
+    plt.savefig(measdir+'/mag_ratios.pdf')
+    plt.close()
     
     # print angle difference
     plt.figure()
-    plt.plot(rf_freqs_usb, np.angle(ab_ratios_usb, deg=True), 'b')
-    plt.plot(rf_freqs_lsb, np.angle(ab_ratios_lsb, deg=True), 'b')
+    plt.plot(if_freqs, np.angle(ab_ratios_usb, deg=True), 'b', label="USB")
+    plt.plot(if_freqs, np.angle(ab_ratios_lsb, deg=True), 'r', label="LSB")
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Angle diff [degrees]')     
+    plt.legend()
     plt.savefig(measdir+'/angle_diff.pdf')
+    plt.close()
 
 def print_multilo_data():
     """
     Print the saved data from all LO settings to .pdf image.
     """
-    # create magnitude ratio figure
+    # create power level figure
     fig1, ax1 = plt.subplots(1,1)
     ax1.grid()                 
     ax1.set_xlabel('Frequency [MHz]')
-    ax1.set_ylabel('Mag ratio [lineal]')     
-
-    # create angle difference figure
+    ax1.set_ylabel('Power [dBFS]')
+    
+    # create magnitude ratio figure
     fig2, ax2 = plt.subplots(1,1)
     ax2.grid()                 
     ax2.set_xlabel('Frequency [MHz]')
-    ax2.set_ylabel('Angle diff [degrees]')     
+    ax2.set_ylabel('Mag ratio [lineal]')     
+
+    # create angle difference figure
+    fig3, ax3 = plt.subplots(1,1)
+    ax3.grid()                 
+    ax3.set_xlabel('Frequency [MHz]')
+    ax3.set_ylabel('Angle diff [degrees]')     
 
     for lo1_freq in lo1_freqs:
         for lo2_freq in lo2_freqs:
@@ -357,8 +395,8 @@ def print_multilo_data():
             measdir = datadir + "/" + measname
             
             # compute rf frequencies
-            rf_freqs_usb = lo1_freq + lo2_freq + if_freqs
-            rf_freqs_lsb = lo1_freq - lo2_freq - if_freqs
+            rf_freqs_usb = lo1_freq + lo2_freq + (if_freqs/1e3) # GHz
+            rf_freqs_lsb = lo1_freq - lo2_freq - (if_freqs/1e3) # GHz
 
             # get data
             caldata = np.load(measdir + "/caldata.npz")
@@ -369,23 +407,30 @@ def print_multilo_data():
             ab_toneusb = caldata['ab_toneusb']
             ab_tonelsb = caldata['ab_tonelsb']
         
+            # compute power levels
+            pow_usb = cd.scale_and_dBFS_specdata(a2_toneusb, acc_len, dBFS)
+            pow_lsb = cd.scale_and_dBFS_specdata(b2_tonelsb, acc_len, dBFS)
+
             # compute ratios
             ab_ratios_usb = ab_toneusb / b2_toneusb
             ab_ratios_lsb = ab_tonelsb / b2_tonelsb
         
+            # plot power levels
+            ax1.plot(rf_freqs_usb, pow_usb, 'b')
+            ax1.plot(rf_freqs_lsb, pow_lsb, 'r')
+            
             # plot magnitude ratios
-            plt.plot(rf_freqs_usb, np.abs(ab_ratios_usb), 'b')
-            plt.plot(rf_freqs_lsb, np.abs(ab_ratios_lsb), 'b')
+            ax2.plot(rf_freqs_usb, np.abs(ab_ratios_usb), 'b')
+            ax2.plot(rf_freqs_lsb, np.abs(ab_ratios_lsb), 'r')
             
             # plot angle difference
-            plt.figure()
-            plt.plot(rf_freqs_usb, np.angle(ab_ratios_usb, deg=True), 'b')
-            plt.plot(rf_freqs_lsb, np.angle(ab_ratios_lsb, deg=True), 'b')
-            plt.savefig(measdir+'/angle_diff.pdf')
+            ax3.plot(rf_freqs_usb, np.angle(ab_ratios_usb, deg=True), 'b')
+            ax3.plot(rf_freqs_lsb, np.angle(ab_ratios_lsb, deg=True), 'r')
 
     # print figures
-    fig1.savefig(datadir+'/mag_ratios.pdf')
-    fig2.savefig(datadir+'/angle_diff.pdf')
+    fig1.savefig(datadir+'/power_lev.pdf')
+    fig2.savefig(datadir+'/mag_ratios.pdf')
+    fig3.savefig(datadir+'/angle_diff.pdf')
 
 def compress_data():
     """

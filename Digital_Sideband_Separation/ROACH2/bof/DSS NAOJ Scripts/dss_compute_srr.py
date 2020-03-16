@@ -40,15 +40,15 @@ pause_time  = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order
                   # for the spectra to be fully computed after a tone change
 load_consts = True
 load_ideal  = False
-caldir      = 'dss_cal 2020-03-13 18:26:34.tar.gz'
+caldir      = 'dss_cal 2020-03-16 10:36:22.tar.gz'
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_lsb)
-if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False)
+if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False) # MHz
 test_channels = range(1, nchannels, chnl_step)
-if_test_freqs = if_freqs[test_channels]
-rf_freqs_usb  = lo_freq + if_freqs
-rf_freqs_lsb  = lo_freq - if_freqs
+if_test_freqs = if_freqs[test_channels] # MHz
+rf_freqs_usb  = lo_freq + if_freqs # MHz
+rf_freqs_lsb  = lo_freq - if_freqs # MHz
 dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)                
 
 def main():
@@ -179,13 +179,13 @@ def make_data_directory():
     testinfo["roach ip"]        = roach_ip
     testinfo["date time"]       = date_time
     testinfo["boffile"]         = boffile
-    testinfo["bandwidth"]       = bandwidth
+    testinfo["bandwidth mhz"    = bandwidth
     testinfo["lo freq"]         = lo_freq
     testinfo["nchannels"]       = nchannels
     testinfo["acc len"]         = acc_len
     testinfo["chnl step"]       = chnl_step
     testinfo["rf generator ip"] = rf_generator_ip
-    testinfo["rf power"]        = rf_power
+    testinfo["rf power dbm"]    = rf_power
     testinfo["load consts"]     = load_consts
     testinfo["load ideal"]      = load_ideal
     testinfo["caldir"]          = caldir
@@ -238,11 +238,11 @@ def get_srrdata(rf_freqs, tone_sideband):
             srr = np.divide(lsb_arr, usb_arr)
 
         # define sb plot line
-        line_sb = line[2] if tone_sideband=='usb' else line[3]
+        line_sb = lines[2] if tone_sideband=='usb' else lines[3]
 
         # plot data
-        line[0].set_data(if_freqs, usb_plot)
-        line[1].set_data(if_freqs, lsb_plot)
+        lines[0].set_data(if_freqs, usb_plot)
+        lines[1].set_data(if_freqs, lsb_plot)
         line_sb.set_data(if_test_freqs[:i+1], 10*np.log10(srr))
         fig.canvas.draw()
         fig.canvas.flush_events()
@@ -273,7 +273,7 @@ def print_data():
     # print SRR
     plt.figure()
     plt.plot(rf_freqs_usb, 10*np.log10(srr_usb), 'b')
-    plt.plot(rf_freqs_lsb, 10*np.log10(srr_lsb), 'b')
+    plt.plot(rf_freqs_lsb, 10*np.log10(srr_lsb), 'r')
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('SRR [dB]')     
