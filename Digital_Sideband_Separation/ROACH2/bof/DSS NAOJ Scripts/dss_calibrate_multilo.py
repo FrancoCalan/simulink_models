@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 import calandigital as cd
 
 # communication parameters
-#roach_ip           = '133.40.220.2'
-roach_ip           = None
+roach_ip           = '133.40.220.2'
+#roach_ip           = None
 boffile            = 'dss_2048ch_1520mhz.bof.gz'
-lo1_generator_name = "GPIB0::0::INSTR"
-lo2_generator_name = "GPIB0::0::INSTR"
-rf_generator_name  = "GPIB0::0::INSTR"
-rm = pyvisa.ResourceManager('@sim')
+lo1_generator_name = "GPIB0::20::INSTR"
+lo2_generator_name = "GPIB0::5::INSTR"
+rf_generator_name  = "GPIB0::11::INSTR"
+rm = pyvisa.ResourceManager('@py')
 
 # model parameters
 adc_bits           = 8
@@ -37,20 +37,22 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
 
 # experiment parameters
 # band 7 parameters
-lo1_freqs  = np.arange(275+20, 373, 16) # GHz
+#lo1_freqs  = np.arange(275+20, 373, 16) # GHz
 #lo1_freqs  = np.arange(275+20, 373, 100) # GHz
-lo1_mult   = 3
+#lo1_mult   = 18
 # band 8 parameters
 #lo1_freqs  = np.arange(385+20, 500, 16) # GHz
-#lo1_mult   = 6
+lo1_freqs  = np.arange(400+20, 500, 100) # GHz
+lo1_mult   = 18
 #
-lo2_freqs  = np.arange(4, 20, 1) # GHz
-#lo2_freqs  = np.arange(4, 20, 20) # GHz
-lo1_power  = -50 # dBm
-lo2_power  = -50 # dBm
-rf_power   = -50 # dBm
+#lo2_freqs  = np.arange(4, 20, 1) # GHz
+lo2_freqs  = np.arange(4, 20, 20) # GHz
+lo1_power  = 18 # dBm
+lo2_power  = 16 # dBm
+rf_mult    = 36
+rf_power   = 7 # dBm
 acc_len    = 2**16
-chnl_step  = 32
+chnl_step  = 16
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "dss_cal " + date_time
 pause_time = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
@@ -84,7 +86,7 @@ def make_pre_measurements_actions():
 
     roach = cd.initialize_roach(roach_ip)
     lo1_generator = rm.open_resource(lo1_generator_name)
-    lo2_generator = rm.open_resource(lo1_generator_name)
+    lo2_generator = rm.open_resource(lo2_generator_name)
     rf_generator  = rm.open_resource(rf_generator_name)
 
     print("Setting up plotting and data saving elements...")
@@ -102,9 +104,10 @@ def make_pre_measurements_actions():
     
     print("Setting instruments power and outputs...")
     lo1_generator.write("power " + str(lo1_power))
-    lo1_generator.write("freq mult " + str(lo1_mult))
+    lo1_generator.write("freq:mult " + str(lo1_mult))
     lo2_generator.write("power " + str(lo2_power))
     rf_generator.write("power " + str(rf_power))
+    rf_generator.write("freq:mult " + str(rf_mult))
     lo1_generator.write("outp on")
     lo2_generator.write("outp on")
     rf_generator.write("outp on")

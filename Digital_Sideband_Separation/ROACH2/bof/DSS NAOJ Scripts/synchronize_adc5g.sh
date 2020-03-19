@@ -3,9 +3,10 @@ synchronize_adc5g.py \
     --ip             133.40.220.2 \
     `#--bof            dss_2048ch_1520mhz.bof.gz` \
     `#--upload` \
-    --genip          192.168.1.34 \
-    --genpow         -19 \
-    --lofreq         3000 \
+    --genip          GPIB0::11::INSTR \
+    --genpow         7 \
+    --genmult        36 \
+    --lofreq         424000 \
     --zdok0brams     dout_a2_0 dout_a2_1 dout_a2_2 dout_a2_3 \
                      dout_a2_4 dout_a2_5 dout_a2_6 dout_a2_7 \
     --zdok1brams     dout_b2_0 dout_b2_1 dout_b2_2 dout_b2_3 \

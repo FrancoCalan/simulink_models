@@ -14,9 +14,9 @@ import calandigital as cd
 #roach_ip           = '133.40.220.2'
 roach_ip           = None
 boffile            = 'dss_2048ch_1520mhz.bof.gz'
-lo1_generator_name = "GPIB0::0::INSTR"
-lo2_generator_name = "GPIB0::0::INSTR"
-chopper_name       = "GPIB0::0::INSTR"
+lo1_generator_name = "GPIB0::20::INSTR"
+lo2_generator_name = "GPIB0::5::INSTR"
+chopper_name       = "GPIB0::1::INSTR"
 rm = pyvisa.ResourceManager('@sim')
 
 # model parameters
@@ -34,16 +34,15 @@ bram_b2    = ['dout_b2_0', 'dout_b2_1', 'dout_b2_2', 'dout_b2_3',
 
 # experiment parameters
 # band 7 parameters
-lo1_freqs  = np.arange(275+20, 373, 16) # GHz
-lo1_mult   = 3
+#lo1_freqs  = np.arange(275+20, 373, 16) # GHz
+#lo1_mult   = 18
 # band 8 parameters
 #lo1_freqs  = np.arange(385+20, 500, 16) # GHz
-#lo1_mult   = 6
+#lo1_mult   = 18
 #
 lo2_freqs  = np.arange(4, 20, 1) # GHz
-lo1_power  = -50 # dBm
-lo2_power  = -50 # dBm
-rf_power   = -50 # dBm
+lo1_power  = 18 # dBm
+lo2_power  = 16 # dBm
 acc_len    = 2**16
 date_time  =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 datadir    = "dss_hotcold " + date_time
@@ -76,7 +75,7 @@ def make_pre_measurements_actions():
 
     roach = cd.initialize_roach(roach_ip)
     lo1_generator = rm.open_resource(lo1_generator_name)
-    lo2_generator = rm.open_resource(lo1_generator_name)
+    lo2_generator = rm.open_resource(lo2_generator_name)
     chopper       = rm.open_resource(chopper_name)
 
     print("Setting up plotting and data saving elements...")
