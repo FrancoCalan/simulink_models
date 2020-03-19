@@ -3,17 +3,19 @@
 # multiple LO values and multiple LO stages.
 
 # imports
-import os, time, datetime, tarfile, shutil, json
+import pyvisa, os, time, datetime, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
 
 # communication parameters
-roach_ip         = '133.40.220.2'
-boffile          = 'dss_2048ch_1520mhz.bof.gz'
-lo1_generator_ip = None
-lo2_generator_ip = None
-rf_generator_ip  = None
+#roach_ip           = '133.40.220.2'
+roach_ip           = None
+boffile            = 'dss_2048ch_1520mhz.bof.gz'
+lo1_generator_name = "GPIB0::0::INSTR"
+lo2_generator_name = "GPIB0::0::INSTR"
+rf_generator_name  = "GPIB0::0::INSTR"
+rm = pyvisa.ResourceManager('@sim')
 
 # model parameters
 adc_bits           = 8
@@ -35,15 +37,15 @@ bram_ab_im = ['dout_ab_im0', 'dout_ab_im1', 'dout_ab_im2', 'dout_ab_im3',
 
 # experiment parameters
 # band 7 parameters
-#lo1_freqs  = np.arange(275+20, 373, 16) # GHz
-lo1_freqs  = np.arange(275+20, 373, 100) # GHz
+lo1_freqs  = np.arange(275+20, 373, 16) # GHz
+#lo1_freqs  = np.arange(275+20, 373, 100) # GHz
 lo1_mult   = 3
 # band 8 parameters
 #lo1_freqs  = np.arange(385+20, 500, 16) # GHz
 #lo1_mult   = 6
 #
-#lo2_freqs  = np.arange(4, 20, 10) # GHz
-lo2_freqs  = np.arange(4, 20, 20) # GHz
+lo2_freqs  = np.arange(4, 20, 1) # GHz
+#lo2_freqs  = np.arange(4, 20, 20) # GHz
 lo1_power  = -50 # dBm
 lo2_power  = -50 # dBm
 rf_power   = -50 # dBm
@@ -81,9 +83,9 @@ def make_pre_measurements_actions():
     global roach, rf_generator, lo1_generator, lo2_generator, fig, lines
 
     roach = cd.initialize_roach(roach_ip)
-    lo1_generator = cd.Instrument(lo1_generator_ip)
-    lo2_generator = cd.Instrument(lo1_generator_ip)
-    rf_generator  = cd.Instrument(rf_generator_ip)
+    lo1_generator = rm.open_resource(lo1_generator_name)
+    lo2_generator = rm.open_resource(lo1_generator_name)
+    rf_generator  = rm.open_resource(rf_generator_name)
 
     print("Setting up plotting and data saving elements...")
     fig, lines = create_figure()
@@ -113,12 +115,12 @@ def make_dss_multilo_measurements():
     Makes the measurements for dss calibration with multiple LOs.
     """
     for lo1_freq in lo1_freqs:
-        # set lo1 frequency (must be in Hz)
-        lo1_generator.ask("freq " + str(lo1_freq*1e9) + ";*opc?")
+        # set lo1 frequency
+        lo1_generator.ask("freq " + str(lo1_freq) + " ghz; *opc?")
         
         for lo2_freq in lo2_freqs:
-            # set lo2 frequency (must be in Hz)
-            lo2_generator.ask("freq " + str(lo2_freq*1e9) + ";*opc?")
+            # set lo2 frequency
+            lo2_generator.ask("freq " + str(lo2_freq) + "ghz; *opc?")
 
             # print setting
             print("Current LOs: LO1:" + str(lo1_freq) + "GHz," +
@@ -175,7 +177,7 @@ def create_figure():
     
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
-    ax0.set_ylim((-80, 5))           ; ax1.set_ylim((-80, 5))
+    ax0.set_ylim((-85, 5))           ; ax1.set_ylim((-85, 5))
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')
@@ -205,21 +207,21 @@ def make_data_directory():
 
     # make .json file with test info
     testinfo = {}
-    testinfo["roach ip"]         = roach_ip
-    testinfo["date time"]        = date_time
-    testinfo["boffile"]          = boffile
-    testinfo["bandwidth mhz"]    = bandwidth
-    testinfo["nchannels"]        = nchannels
-    testinfo["acc len"]          = acc_len
-    testinfo["chnl step"]        = chnl_step
-    testinfo["lo1 generator ip"] = lo1_generator_ip
-    testinfo["lo2 generator ip"] = lo2_generator_ip
-    testinfo["lo1 freqs ghz"]    = str(lo1_freqs)
-    testinfo["lo2 freqs ghz"]    = str(lo2_freqs)
-    testinfo["lo1 power dbm"]    = lo1_power
-    testinfo["lo2 power dbm"]    = lo2_power
-    testinfo["rf generator ip"]  = rf_generator_ip
-    testinfo["rf power dbm"]     = rf_power
+    testinfo["roach ip"]           = roach_ip
+    testinfo["date time"]          = date_time
+    testinfo["boffile"]            = boffile
+    testinfo["bandwidth mhz"]      = bandwidth
+    testinfo["nchannels"]          = nchannels
+    testinfo["acc len"]            = acc_len
+    testinfo["chnl step"]          = chnl_step
+    testinfo["lo1 generator name"] = lo1_generator_name
+    testinfo["lo2 generator name"] = lo2_generator_name
+    testinfo["lo1 freqs ghz"]      = str(lo1_freqs)
+    testinfo["lo2 freqs ghz"]      = str(lo2_freqs)
+    testinfo["lo1 power dbm"]      = lo1_power
+    testinfo["lo2 power dbm"]      = lo2_power
+    testinfo["rf generator name"]  = rf_generator_name
+    testinfo["rf power dbm"]       = rf_power
 
     with open(datadir + "/testinfo.json", "w") as f:
         json.dump(testinfo, f, indent=4, sort_keys=True)
@@ -270,7 +272,7 @@ def get_caldata(measdir, rf_freqs, tone_sideband):
     for i, chnl in enumerate(test_channels):
         # set test tone
         freq = rf_freqs[chnl]
-        rf_generator.ask("freq " + str(freq*1e9) + ";*opc?") # freq must be in Hz
+        rf_generator.ask("freq " + str(freq) + " ghz; *opc?")
         time.sleep(pause_time)
 
         # read data

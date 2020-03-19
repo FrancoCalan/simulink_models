@@ -149,7 +149,7 @@ def create_figure():
     
     # set spectrometers axes
     ax0.set_xlim((0, bandwidth))     ; ax1.set_xlim((0, bandwidth))
-    ax0.set_ylim((-80, 5))           ; ax1.set_ylim((-80, 5))
+    ax0.set_ylim((-85, 5))           ; ax1.set_ylim((-85, 5))
     ax0.grid()                       ; ax1.grid()
     ax0.set_xlabel('Frequency [MHz]'); ax1.set_xlabel('Frequency [MHz]')
     ax0.set_ylabel('Power [dBFS]')   ; ax1.set_ylabel('Power [dBFS]')
@@ -214,7 +214,7 @@ def get_caldata(rf_freqs, tone_sideband):
     for i, chnl in enumerate(test_channels):
         # set test tone
         freq = rf_freqs[chnl]
-        rf_generator.ask("freq " + str(freq*1e6) + ";*opc?") # freq must be in Hz
+        rf_generator.ask("freq " + str(freq) + " mhz; *opc?")
         time.sleep(pause_time)
 
         # read data
