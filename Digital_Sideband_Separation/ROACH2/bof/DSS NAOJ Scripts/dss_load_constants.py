@@ -2,29 +2,7 @@
 import argparse, tarfile
 import numpy as np
 import calandigital as cd
-
-# model parameters
-nchannels      = 2048
-consts_nbits   = 32
-consts_binpt   = 27
-# constants where USB is maximized (LSB is rejected)
-bram_consts_usb_re = ['bram_mult0_0_bram_re', 'bram_mult0_1_bram_re',
-                      'bram_mult0_2_bram_re', 'bram_mult0_3_bram_re',
-                      'bram_mult0_4_bram_re', 'bram_mult0_5_bram_re',
-                      'bram_mult0_6_bram_re', 'bram_mult0_7_bram_re']
-bram_consts_usb_im = ['bram_mult0_0_bram_im', 'bram_mult0_1_bram_im',
-                      'bram_mult0_2_bram_im', 'bram_mult0_3_bram_im',
-                      'bram_mult0_4_bram_im', 'bram_mult0_5_bram_im',
-                      'bram_mult0_6_bram_im', 'bram_mult0_7_bram_im']
-# constants where LSB is maximized (USB is rejected)
-bram_consts_lsb_re = ['bram_mult1_0_bram_re', 'bram_mult1_1_bram_re',
-                      'bram_mult1_2_bram_re', 'bram_mult1_3_bram_re',
-                      'bram_mult1_4_bram_re', 'bram_mult1_5_bram_re',
-                      'bram_mult1_6_bram_re', 'bram_mult1_7_bram_re']
-bram_consts_lsb_im = ['bram_mult1_0_bram_im', 'bram_mult1_1_bram_im',
-                      'bram_mult1_2_bram_im', 'bram_mult1_3_bram_im',
-                      'bram_mult1_4_bram_im', 'bram_mult1_5_bram_im',
-                      'bram_mult1_6_bram_im', 'bram_mult1_7_bram_im']
+from dss_multilo_parameters import *
 
 if __name__ == '__main__':
     # if used as main script, read command line argmuments 

@@ -3,66 +3,12 @@
 # multiple LO values and multiple LO stages.
 
 # imports
-import pyvisa, os, time, datetime, tarfile, shutil, json
+import os, time, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
 from dss_load_constants import dss_load_constants
-
-# communication parameters
-roach_ip           = '133.40.220.2'
-#roach_ip           = None
-boffile            = 'dss_2048ch_1520mhz.bof.gz'
-lo1_generator_name = "GPIB0::20::INSTR"
-lo2_generator_name = "GPIB0::5::INSTR"
-rf_generator_name  = "GPIB0::11::INSTR"
-rm = pyvisa.ResourceManager('@py')
-
-# model parameters
-adc_bits        = 8
-bandwidth       = 1080 # MHz
-acc_len_reg     = 'syn_acc_len'
-cnt_rst_reg     = 'cnt_rst'
-bram_addr_width = 8  # bits
-bram_word_width = 64 # bits
-pow_data_type   = '>u8'
-bram_usb = ['dout0_0', 'dout0_1', 'dout0_2', 'dout0_3', 
-            'dout0_4', 'dout0_5', 'dout0_6', 'dout0_7']
-bram_lsb = ['dout1_0', 'dout1_1', 'dout1_2', 'dout1_3', 
-            'dout1_4', 'dout1_5', 'dout1_6', 'dout1_7']
-
-# experiment parameters
-# band 7 parameters
-#lo1_freqs  = np.arange(275+20, 373, 16) # GHz
-#lo1_freqs  = np.arange(275+20, 373, 100) # GHz
-#lo1_mult   = 18
-# band 8 parameters
-#lo1_freqs  = np.arange(385+20, 500, 16) # GHz
-lo1_freqs  = np.arange(400+20, 500, 100) # GHz
-lo1_mult   = 18
-#
-#lo2_freqs   = np.arange(4, 20, 10) # GHz
-lo2_freqs   = np.arange(4, 20, 20) # GHz
-lo1_power   = 18 # dBm
-lo2_power   = 16 # dBm
-rf_mult     = 36
-rf_power    = 7 # dBm
-acc_len     = 2**16
-chnl_step   = 16
-date_time   =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-datadir     = "dss_srr " + date_time
-pause_time  = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in order 
-                  # for the spectra to be fully computed after a tone change
-load_consts = True
-load_ideal  = False
-caltar      = 'dss_cal 2020-03-19 18:13:07.tar.gz'
-
-# derivative parameters
-nchannels     = 2**bram_addr_width * len(bram_lsb)
-if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False) # MHz
-test_channels = range(1, nchannels, chnl_step)
-if_test_freqs = if_freqs[test_channels] # MHz
-dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)                
+from dss_multilo_parameters import *
 
 def main():
     start_time = time.time()
@@ -94,7 +40,7 @@ def make_pre_measurements_actions():
     print("done")
 
     print("Setting accumulation register to " + str(acc_len) + "...")
-    roach.write_int(acc_len_reg, acc_len)
+    roach.write_int(syn_acc_len_reg, acc_len)
     print("done")
     print("Resseting counter registers...")
     roach.write_int(cnt_rst_reg, 1)
@@ -130,7 +76,7 @@ def make_dss_multilo_measurements():
             # make measurement subdirectory
             measname = "lo1_" + str(lo1_freq) + "ghz_lo2_" + \
                                 str(lo2_freq) + "ghz"
-            measdir = datadir + "/" + measname
+            measdir = srr_datadir + "/" + measname
             os.mkdir(measdir)
             os.mkdir(measdir + "/rawdata_tone_usb")
             os.mkdir(measdir + "/rawdata_tone_lsb")
@@ -157,7 +103,7 @@ def make_post_measurements_actions():
     print("done")
 
     print("Compressing data...")
-    compress_data()
+    compress_data(srr_datadir)
     print("done")
 
 def create_figure():
@@ -198,7 +144,7 @@ def make_data_directory():
     """
     Make directory where to save all the srr data.
     """
-    os.mkdir(datadir)
+    os.mkdir(srr_datadir)
 
     # make .json file with test info
     testinfo = {}
@@ -221,14 +167,14 @@ def make_data_directory():
     testinfo["load ideal"]         = load_ideal
     testinfo["caltar"]             = caltar
 
-    with open(datadir + "/testinfo.json", "w") as f:
+    with open(srr_datadir + "/testinfo.json", "w") as f:
         json.dump(testinfo, f, indent=4, sort_keys=True)
 
 def make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb):
     """
     Makes the measurements for srr computation for a single set of LOs.
     :param measdir: directory where to save the data of this measurement
-        (sub directory of main datadir).
+        (sub directory of main srr_datadir).
     :param rf_freqs_usb: rf frequencies to measure in usb (GHz).
     :param rf_freqs_lsb: rf frequencies to measure in lsb (GHz).
     """
@@ -321,8 +267,8 @@ def get_srrdata(measdir, rf_freqs, tone_sideband):
 def print_data(measdir):
     """
     Print the saved data to .pdf images for an easy check.
-    :param datadir: directory where to read the data of single measurement
-    and save the image (sub directory of main datadir).
+    :param measdir: directory where to read the data of single measurement
+    and save the image (sub directory of main srr_datadir).
     """
     # get data
     srrdata = np.load(measdir + "/srrdata.npz")
@@ -359,7 +305,7 @@ def print_multilo_data():
             # get measurement subdirectory
             measname = "lo1_" + str(lo1_freq) + "ghz_lo2_" + \
                                 str(lo2_freq) + "ghz"
-            measdir = datadir + "/" + measname
+            measdir = srr_datadir + "/" + measname
             
             # compute rf frequencies
             rf_freqs_usb = lo1_freq + lo2_freq + (if_freqs/1e3) # GHz
@@ -381,12 +327,13 @@ def print_multilo_data():
             ax1.plot(rf_freqs_lsb, 10*np.log10(srr_lsb), 'r')
             
     # print figures
-    fig1.savefig(datadir+'/srr.pdf')
+    fig1.savefig(srr_datadir+'/srr.pdf')
 
-def compress_data():
+def compress_data(datadir):
     """
     Compress the data from the datadir directory into a .tar.gz
     file and delete the original directory.
+    :param datair: directory to compress.
     """
     tar = tarfile.open(datadir + ".tar.gz", "w:gz")
     for datafile in os.listdir(datadir):
