@@ -3,7 +3,7 @@ calibrate_adc5g.py \
     --ip         192.168.1.12 \
     --bof        snap2in.bof.gz \
     --upload \
-    `#--genip      192.168.1.34` \
+    `#--genname    TCPIP::192.168.1.34::INSTR` \
     --genfreq    10 \
     --genpow     -3 \
     --zdok0snaps adcsnap0 \

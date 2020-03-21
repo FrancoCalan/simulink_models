@@ -3,7 +3,7 @@ synchronize_adc5g.py \
     --ip             133.40.220.2 \
     `#--bof            dss_2048ch_1520mhz.bof.gz` \
     `#--upload` \
-    --genip          GPIB0::11::INSTR \
+    --genname        GPIB0::11::INSTR \
     --genpow         7 \
     --genmult        36 \
     --lofreq         424000 \

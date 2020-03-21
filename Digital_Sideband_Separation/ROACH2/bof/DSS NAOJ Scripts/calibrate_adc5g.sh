@@ -3,7 +3,7 @@ calibrate_adc5g.py \
     --ip         133.40.220.2 \
     `#--bof        dss_2048ch_1520mhz.bof.gz` \
     `#--upload` \
-    `#--genip      192.168.1.34` \
+    `#--genname    GPIB0::5::INSTR` \
     --genfreq    10 \
     --genpow     -3 \
     --zdok0snaps adcsnap0 \

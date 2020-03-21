@@ -2,7 +2,7 @@
 synchronize_adc5g.py \
     --ip             192.168.1.12 \
     --bof            corr2in_4096ch_1080mhz.bof.gz \
-    --genip          192.168.1.34 \
+    --genname        TCPIP::192.168.1.34::INSTR \
     --genpow         -10 \
     --zdok0brams     dout_a2_0 dout_a2_1 dout_a2_2 dout_a2_3 \
                      dout_a2_4 dout_a2_5 dout_a2_6 dout_a2_7 \
