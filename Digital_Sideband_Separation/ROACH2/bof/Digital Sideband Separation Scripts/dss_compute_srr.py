@@ -88,6 +88,7 @@ def make_post_measurements_actions():
     """
     print("Turning off instruments...")
     rf_generator.write("outp off")
+    rm.close()
     print("done")
 
     print("Compressing data...")

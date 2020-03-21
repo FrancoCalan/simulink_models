@@ -49,9 +49,10 @@ def make_pre_measurements_actions():
 
     print("Setting instruments power and outputs...")
     lo1_generator.write("power " + str(lo1_power))
-    lo1_generator.write("freq mult " + str(lo1_mult))
+    lo1_generator.write("freq:mult " + str(lo1_mult))
     lo2_generator.write("power " + str(lo2_power))
     rf_generator.write("power " + str(rf_power))
+    rf_generator.write("freq:mult " + str(rf_mult))
     lo1_generator.write("outp on")
     lo2_generator.write("outp on")
     rf_generator.write("outp on")
@@ -97,9 +98,12 @@ def make_post_measurements_actions():
     - compress data
     """
     print("Turning off instruments...")
+    lo1_generator.write("freq:mult 1")
+    rf_generator.write("freq:mult 1")
     lo1_generator.write("outp off")
     lo2_generator.write("outp off")
     rf_generator.write("outp off")
+    rm.close()
     print("done")
 
     print("Compressing data...")
