@@ -136,7 +136,7 @@ def create_figure():
 
     # set magnitude diference axis
     ax2.set_xlim((0, bandwidth))
-    ax2.set_ylim((0, 2))     
+    ax2.set_ylim((0, 1))     
     ax2.grid()                 
     ax2.set_xlabel('Frequency [MHz]')
     ax2.set_ylabel('Mag ratio [lineal]')     
@@ -246,7 +246,10 @@ def get_caldata(measdir, rf_freqs, tone_sideband):
         b2_plot = cd.scale_and_dBFS_specdata(b2, acc_len, dBFS)
 
         # compute input ratios for plotting
-        ab_ratios = np.divide(ab_arr, b2_arr)
+        if tone_sideband=='usb':
+            ab_ratios = np.divide(np.conj(ab_arr), a2_arr) # (ab*)* /aa* = a*b / aa* = b/a
+        else: # tone_sideband=='lsb
+            ab_ratios = np.divide(ab_arr, b2_arr) # ab* / bb* = a/b
 
         # plot data
         lines[0].set_data(if_freqs, a2_plot)
@@ -284,8 +287,8 @@ def print_data(measdir):
     pow_lsb = cd.scale_and_dBFS_specdata(b2_tonelsb, acc_len, dBFS)
 
     # compute ratios
-    ab_ratios_usb = ab_toneusb / b2_toneusb
-    ab_ratios_lsb = ab_tonelsb / b2_tonelsb
+    ab_ratios_usb = np.conj(ab_toneusb) / a2_toneusb # (ab*)* /aa* = a*b / aa* = b/a
+    ab_ratios_lsb = ab_tonelsb / b2_tonelsb # ab* / bb* = a/b
 
     # print power level
     plt.figure()
@@ -367,8 +370,8 @@ def print_multilo_data():
             pow_lsb = cd.scale_and_dBFS_specdata(b2_tonelsb, acc_len, dBFS)
 
             # compute ratios
-            ab_ratios_usb = ab_toneusb / b2_toneusb
-            ab_ratios_lsb = ab_tonelsb / b2_tonelsb
+            ab_ratios_usb = np.conj(ab_toneusb) / a2_toneusb # (ab*)* /aa* = a*b / aa* = b/a
+            ab_ratios_lsb = ab_tonelsb / b2_tonelsb # ab* / bb* = a/b
         
             # plot power levels
             ax1.plot(rf_freqs_usb, pow_usb, 'b')

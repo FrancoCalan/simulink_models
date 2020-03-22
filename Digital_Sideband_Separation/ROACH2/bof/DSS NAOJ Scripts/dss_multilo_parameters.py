@@ -27,6 +27,7 @@ pow_data_type      = '>u8'
 crosspow_data_type = '>i8'
 consts_nbits       = 32
 consts_binpt       = 27
+delay_regs         = ['adc0_delay', 'adc1_delay']
 bram_a2    = ['dout_a2_0', 'dout_a2_1', 'dout_a2_2', 'dout_a2_3', 
               'dout_a2_4', 'dout_a2_5', 'dout_a2_6', 'dout_a2_7']
 bram_b2    = ['dout_b2_0', 'dout_b2_1', 'dout_b2_2', 'dout_b2_3', 
