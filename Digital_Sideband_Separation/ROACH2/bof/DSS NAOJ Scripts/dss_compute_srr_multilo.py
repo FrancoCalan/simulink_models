@@ -110,6 +110,9 @@ def make_post_measurements_actions():
     compress_data(srr_datadir)
     print("done")
 
+    # Write file to save last srr directory
+    f = open("last_srrtar.txt", "w"); f.write(srr_datadir+".tar.gz"); f.close();
+
 def create_figure():
     """
     Creates figure for plotting.
@@ -294,7 +297,6 @@ def print_spec_data(rawdata_dir, chnl):
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Power [dBFS]')     
-    plt.legend()
     plt.savefig(rawdata_dir+'/chnl_' + str(chnl) + '_usb.pdf')
     plt.close()
 
@@ -305,7 +307,6 @@ def print_spec_data(rawdata_dir, chnl):
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Power [dBFS]')     
-    plt.legend()
     plt.savefig(rawdata_dir+'/chnl_' + str(chnl) + '_lsb.pdf')
     plt.close()
 
@@ -418,10 +419,10 @@ def print_multilo_data():
 
             # plot power levels signal
             ax1.plot(rf_freqs_usb, pow_usb_toneusb, color=color)
-            ax1.plot(rf_freqs_usb, pow_usb_tonelsb, color=color)
+            ax1.plot(rf_freqs_lsb, pow_lsb_tonelsb, color=color)
 
             # plot power levels image
-            ax2.plot(rf_freqs_lsb, pow_lsb_tonelsb, color=color)
+            ax2.plot(rf_freqs_usb, pow_usb_tonelsb, color=color)
             ax2.plot(rf_freqs_lsb, pow_lsb_toneusb, color=color)
 
             # plot SRR

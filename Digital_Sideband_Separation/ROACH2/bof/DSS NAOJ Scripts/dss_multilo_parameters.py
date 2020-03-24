@@ -5,15 +5,15 @@ import datetime, pyvisa
 import numpy as np
 
 # communication parameters
-#roach_ip           = '133.40.220.2'
-roach_ip           = None
+roach_ip           = '133.40.220.2'
+#roach_ip           = None
 boffile            = 'dss_2048ch_1520mhz.bof.gz'
 lo1_generator_name = "GPIB0::20::INSTR"
 lo2_generator_name = "GPIB0::5::INSTR"
 rf_generator_name  = "GPIB0::11::INSTR"
 chopper_name       = "GPIB0::1::INSTR"
-#rm = pyvisa.ResourceManager('@py')
-rm = pyvisa.ResourceManager('@sim')
+rm = pyvisa.ResourceManager('@py')
+#rm = pyvisa.ResourceManager('@sim')
 
 # model parameters
 adc_bits           = 8
@@ -66,7 +66,7 @@ bram_consts_lsb_im = ['bram_mult1_0_bram_im', 'bram_mult1_1_bram_im',
 #lo1_mult        = 18
 # band 8 parameters
 #lo1_freqs       = np.arange(385+20, 500, 16) # GHz
-lo1_freqs       = [420] # GHz
+lo1_freqs       = [437] # GHz
 lo1_mult        = 18
 #lo2_freqs       = np.arange(4, 20, 1) # GHz
 lo2_freqs       = [4] # GHz
@@ -75,7 +75,7 @@ lo2_power       = 16 # dBm
 rf_mult         = 36
 rf_power        = 7 # dBm
 acc_len         = 2**16
-chnl_step       = 256
+chnl_step       = 512
 date_time       =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 cal_datadir     = "dss_cal "     + date_time
 srr_datadir     = "dss_srr "     + date_time
@@ -83,9 +83,10 @@ hotcold_datadir = "dss_hotcold " + date_time
 pause_time      = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in 
                       # order  for the spectra to be fully computed after a 
                       # tone change
-load_consts     = False
+load_consts     = True
 load_ideal      = False
-caltar          = 'dss_cal 2020-03-23 17:09:22.tar.gz'
+#caltar          = 'dss_cal 2020-03-24 14:09:21.tar.gz'
+caltar          = open('last_caltar.txt', 'r').read()
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_a2)

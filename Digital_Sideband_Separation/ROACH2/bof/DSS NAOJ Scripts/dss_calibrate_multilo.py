@@ -3,7 +3,7 @@
 # multiple LO values and multiple LO stages.
 
 # imports
-import os, time, tarfile, shutil, json, pyperclip
+import os, time, tarfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
@@ -110,8 +110,8 @@ def make_post_measurements_actions():
     compress_data(cal_datadir)
     print("done")
 
-    # just a helper. Copy cal.datadir into the system paperclip
-    pyperclip.copy(cal_datadir + ".tar.gz")
+    # Write file to save last calibration directory
+    f = open("last_caltar.txt", "w"); f.write(cal_datadir+".tar.gz"); f.close();
 
 def create_figure():
     """
@@ -299,7 +299,6 @@ def print_spec_data(rawdata_dir, chnl):
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Power [dBFS]')     
-    plt.legend()
     plt.savefig(rawdata_dir+'/chnl_' + str(chnl) + '_a2.pdf')
     plt.close()
 
@@ -310,7 +309,6 @@ def print_spec_data(rawdata_dir, chnl):
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Power [dBFS]')     
-    plt.legend()
     plt.savefig(rawdata_dir+'/chnl_' + str(chnl) + '_b2.pdf')
     plt.close()
 
@@ -460,10 +458,10 @@ def print_multilo_data():
 
             # plot power levels signal
             ax1.plot(rf_freqs_usb, pow_a2_toneusb, color=color)
-            ax1.plot(rf_freqs_usb, pow_a2_tonelsb, color=color)
+            ax1.plot(rf_freqs_lsb, pow_b2_tonelsb, color=color)
             
             # plot power levels image
-            ax2.plot(rf_freqs_lsb, pow_b2_tonelsb, color=color)
+            ax2.plot(rf_freqs_usb, pow_a2_tonelsb, color=color)
             ax2.plot(rf_freqs_lsb, pow_b2_toneusb, color=color)
 
             # compute ratios
@@ -483,8 +481,8 @@ def print_multilo_data():
             srr_lsb = b2_tonelsb / a2_tonelsb
             
             # plot srr analog
-            plt.plot(if_freqs, 10*np.log10(srr_usb), color=color)
-            plt.plot(if_freqs, 10*np.log10(srr_lsb), color=color)
+            plt.plot(rf_freqs_usb, 10*np.log10(srr_usb), color=color)
+            plt.plot(rf_freqs_lsb, 10*np.log10(srr_lsb), color=color)
 
     # print figures
     fig1.savefig(cal_datadir+'/power_lev_sig.pdf')
