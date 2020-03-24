@@ -330,17 +330,26 @@ def print_singlelo_data(measdir):
     srr_usb = usb_toneusb / lsb_toneusb
     srr_lsb = lsb_tonelsb / usb_tonelsb
 
-    # plot power levels
+    # plot power level signal
     plt.figure()
     plt.plot(if_freqs, pow_usb_toneusb, 'b', label="USB toneUSB")
-    plt.plot(if_freqs, pow_usb_tonelsb, 'darkblue', label="USB toneLSB")
     plt.plot(if_freqs, pow_lsb_tonelsb, 'r', label="LSB toneLSB")
-    plt.plot(if_freqs, pow_lsb_toneusb, 'darkred', label="LSB toneUSB")
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Power [dBFS]')     
     plt.legend()
-    plt.savefig(measdir+'/power_lev.pdf')
+    plt.savefig(measdir+'/power_lev_sig.pdf')
+    plt.close()
+
+    # plot power level image
+    plt.figure()
+    plt.plot(if_freqs, pow_usb_tonelsb, 'b', label="USB toneUSB")
+    plt.plot(if_freqs, pow_lsb_toneusb, 'r', label="LSB toneLSB")
+    plt.grid()                 
+    plt.xlabel('Frequency [MHz]')
+    plt.ylabel('Power [dBFS]')     
+    plt.legend()
+    plt.savefig(measdir+'/power_lev_img.pdf')
     plt.close()
             
     # print SRR
@@ -361,19 +370,19 @@ def print_multilo_data():
     # create power level signal figure
     fig1, ax1 = plt.subplots(1,1)
     ax1.grid()                 
-    ax1.set_xlabel('Frequency [MHz]')
+    ax1.set_xlabel('Frequency [GHz]')
     ax1.set_ylabel('Power [dBFS]')
 
     # create power level signal figure
     fig2, ax2 = plt.subplots(1,1)
     ax2.grid()                 
-    ax2.set_xlabel('Frequency [MHz]')
+    ax2.set_xlabel('Frequency [GHz]')
     ax2.set_ylabel('Power [dBFS]')
     
     # create SRR figure
     fig3, ax3 = plt.subplots(1,1)
     ax3.grid()                 
-    ax3.set_xlabel('Frequency [MHz]')
+    ax3.set_xlabel('Frequency [GHz]')
     ax3.set_ylabel('SRR [dB]')
     
     # get colors for plotting

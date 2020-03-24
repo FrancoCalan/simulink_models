@@ -335,20 +335,33 @@ def print_singlelo_data(measdir):
     # compute ratios
     ab_ratios_usb = np.conj(ab_toneusb) / a2_toneusb # (ab*)* /aa* = a*b / aa* = b/a
     ab_ratios_lsb = ab_tonelsb / b2_tonelsb # ab* / bb* = a/b
+    
+    # compute srr analog
+    srr_usb = a2_toneusb / b2_toneusb
+    srr_lsb = b2_tonelsb / a2_tonelsb
 
-    # print power level
+    # print power level signal
     plt.figure()
     plt.plot(if_freqs, pow_a2_toneusb, 'b', label="USB toneUSB")
-    plt.plot(if_freqs, pow_a2_tonelsb, 'darkblue', label="USB toneLSB")
     plt.plot(if_freqs, pow_b2_tonelsb, 'r', label="LSB toneLSB")
-    plt.plot(if_freqs, pow_b2_toneusb, 'darkred', label="LSB toneUSB")
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Power [dBFS]')
     plt.legend()
-    plt.savefig(measdir+'/power_lev.pdf')
+    plt.savefig(measdir+'/power_lev_sig.pdf')
     plt.close()
-
+    
+    # print power level image
+    plt.figure()
+    plt.plot(if_freqs, pow_a2_tonelsb, 'b', label="USB toneLSB")
+    plt.plot(if_freqs, pow_b2_toneusb, 'r', label="LSB toneUSB")
+    plt.grid()                 
+    plt.xlabel('Frequency [MHz]')
+    plt.ylabel('Power [dBFS]')
+    plt.legend()
+    plt.savefig(measdir+'/power_lev_img.pdf')
+    plt.close()
+    
     # print magnitude ratios
     plt.figure()
     plt.plot(if_freqs, np.abs(ab_ratios_usb), 'b', label="USB")
@@ -371,6 +384,17 @@ def print_singlelo_data(measdir):
     plt.savefig(measdir+'/angle_diff.pdf')
     plt.close()
 
+    # print srr analog
+    plt.figure()
+    plt.plot(if_freqs, 10*np.log10(srr_usb), 'b', label="USB")
+    plt.plot(if_freqs, 10*np.log10(srr_lsb), 'r', label="LSB")
+    plt.grid()                 
+    plt.xlabel('Frequency [MHz]')
+    plt.ylabel('SRR [dB]')     
+    plt.legend()
+    plt.savefig(measdir+'/srr_analog.pdf')
+    plt.close()
+
 def print_multilo_data():
     """
     Print the saved data from all LO settings to .pdf image.
@@ -378,26 +402,32 @@ def print_multilo_data():
     # create power level signal figure 
     fig1, ax1 = plt.subplots(1,1)
     ax1.grid()                 
-    ax1.set_xlabel('Frequency [MHz]')
+    ax1.set_xlabel('Frequency [GHz]')
     ax1.set_ylabel('Power [dBFS]')
     
     # create power level image figure 
     fig2, ax2 = plt.subplots(1,1)
     ax2.grid()                 
-    ax2.set_xlabel('Frequency [MHz]')
+    ax2.set_xlabel('Frequency [GHz]')
     ax2.set_ylabel('Power [dBFS]')
     
     # create magnitude ratio figure
     fig3, ax3 = plt.subplots(1,1)
     ax3.grid()                 
-    ax3.set_xlabel('Frequency [MHz]')
+    ax3.set_xlabel('Frequency [GHz]')
     ax3.set_ylabel('Mag ratio [lineal]')     
 
     # create angle difference figure
     fig4, ax4 = plt.subplots(1,1)
     ax4.grid()                 
-    ax4.set_xlabel('Frequency [MHz]')
+    ax4.set_xlabel('Frequency [GHz]')
     ax4.set_ylabel('Angle diff [degrees]')     
+
+    # create analog srr figure
+    fig5, ax5 = plt.subplots(1,1)
+    ax5.grid()                 
+    ax5.set_xlabel('Frequency [GHz]')
+    ax5.set_ylabel('SRR [dB]')     
 
     # get colors for plotting
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -447,12 +477,21 @@ def print_multilo_data():
             # plot angle difference
             ax4.plot(rf_freqs_usb, np.angle(ab_ratios_usb, deg=True), color=color)
             ax4.plot(rf_freqs_lsb, np.angle(ab_ratios_lsb, deg=True), color=color)
+    
+            # compute srr analog
+            srr_usb = a2_toneusb / b2_toneusb
+            srr_lsb = b2_tonelsb / a2_tonelsb
+            
+            # plot srr analog
+            plt.plot(if_freqs, 10*np.log10(srr_usb), color=color)
+            plt.plot(if_freqs, 10*np.log10(srr_lsb), color=color)
 
     # print figures
     fig1.savefig(cal_datadir+'/power_lev_sig.pdf')
     fig2.savefig(cal_datadir+'/power_lev_img.pdf')
     fig3.savefig(cal_datadir+'/mag_ratios.pdf')
     fig4.savefig(cal_datadir+'/angle_diff.pdf')
+    fig5.savefig(cal_datadir+'/srr_analog.pdf')
 
 def compress_data(datadir):
     """
