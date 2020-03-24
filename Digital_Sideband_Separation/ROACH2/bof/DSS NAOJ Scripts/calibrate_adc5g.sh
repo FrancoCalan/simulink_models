@@ -13,8 +13,8 @@ calibrate_adc5g.py \
     `#--do_inl` \
     --load_ogp \
     --load_inl \
-    --plot_snap \
-    --plot_spec \
+    `#--plot_snap` \
+    `#--plot_spec` \
     --nsamples   200 \
     --bandwidth  1080 \
     --loaddir    adc5gcal\ 2020-03-18\ 10:19:56

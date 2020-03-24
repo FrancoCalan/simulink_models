@@ -198,12 +198,12 @@ def make_dss_measurements(measdir):
     print("done")
 
     print("Printing data...")
-    print_data(measdir)
+    print_singlelo_data(measdir)
     print("done")
 
-def print_data(measdir):
+def print_singlelo_data(measdir):
     """
-    Print the saved data to .pdf images for an easy check.
+    Print the saved data to .pdf images for an easy: check.
     :param measdir: directory where to read the data of single measurement
     and save the image (sub directory of main hotcold_datadir).
     """

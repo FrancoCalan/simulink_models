@@ -134,7 +134,7 @@ def create_figure():
 
     # set magnitude diference axis
     ax2.set_xlim((0, bandwidth))
-    ax2.set_ylim((0, 2))     
+    ax2.set_ylim((0, 1))     
     ax2.grid()                 
     ax2.set_xlabel('Frequency [MHz]')
     ax2.set_ylabel('Mag ratio [lineal]')     
@@ -183,7 +183,7 @@ def get_caldata(rf_freqs):
         b2_plot = cd.scale_and_dBFS_specdata(b2, acc_len, dBFS)
 
         # compute input ratios for plotting
-        ab_ratios = np.divide(ab_arr, b2_arr)
+        ab_ratios = np.divide(np.conj(ab_arr), a2_arr) # (ab*)* /aa* = a*b / aa* = b/a
 
         # plot data
         lines[0].set_data(if_freqs, a2_plot)

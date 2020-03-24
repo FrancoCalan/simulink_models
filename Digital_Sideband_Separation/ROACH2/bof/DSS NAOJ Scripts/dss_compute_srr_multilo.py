@@ -204,7 +204,7 @@ def make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb):
     print("done")
 
     print("Printing data...")
-    print_data(measdir)
+    print_singlelo_data(measdir)
     print("done")
 
 def get_srrdata(measdir, rf_freqs, tone_sideband):
@@ -259,8 +259,12 @@ def get_srrdata(measdir, rf_freqs, tone_sideband):
         fig.canvas.flush_events()
         
         # save data
-        np.savez(measdir+"/rawdata_tone_" + tone_sideband + "/chnl_" + str(chnl), 
+        rawdata_dir = measdir+"/rawdata_tone_" + tone_sideband
+        np.savez(rawdata_dir + "/chnl_" + str(chnl), 
             usb=usb, lsb=lsb)
+
+        # print raw spectral data
+        print_spec_data(rawdata_dir, chnl)
 
     # compute interpolations
     usb_arr = np.interp(if_freqs, if_test_freqs, usb_arr)
@@ -268,7 +272,44 @@ def get_srrdata(measdir, rf_freqs, tone_sideband):
 
     return usb_arr, lsb_arr
 
-def print_data(measdir):
+def print_spec_data(rawdata_dir, chnl):
+    """
+    Print the saved data to .pdf images for an easy check.
+    :param rawdata_dir: directory where to read the data and print the plot.
+    :param chnl: channel where the tone is injected.
+    """
+    # get data
+    specdata = np.load(rawdata_dir + "/chnl_" + str(chnl) + ".npz")
+    usb = specdata['usb']
+    lsb = specdata['lsb']
+
+    # compute power levels
+    pow_usb = cd.scale_and_dBFS_specdata(usb, acc_len, dBFS)
+    pow_lsb = cd.scale_and_dBFS_specdata(lsb, acc_len, dBFS)
+
+    # plot spec usb
+    plt.figure()
+    plt.plot(if_freqs, pow_usb, 'b')
+    plt.ylim((-85, 5))
+    plt.grid()                 
+    plt.xlabel('Frequency [MHz]')
+    plt.ylabel('Power [dBFS]')     
+    plt.legend()
+    plt.savefig(rawdata_dir+'/chnl_' + str(chnl) + '_usb.pdf')
+    plt.close()
+
+    # plot spec lsb
+    plt.figure()
+    plt.plot(if_freqs, pow_lsb, 'r')
+    plt.ylim((-85, 5))
+    plt.grid()                 
+    plt.xlabel('Frequency [MHz]')
+    plt.ylabel('Power [dBFS]')     
+    plt.legend()
+    plt.savefig(rawdata_dir+'/chnl_' + str(chnl) + '_lsb.pdf')
+    plt.close()
+
+def print_singlelo_data(measdir):
     """
     Print the saved data to .pdf images for an easy check.
     :param measdir: directory where to read the data of single measurement
@@ -279,10 +320,29 @@ def print_data(measdir):
     usb_toneusb = srrdata['usb_toneusb']; lsb_toneusb = srrdata['lsb_toneusb']
     usb_tonelsb = srrdata['usb_tonelsb']; lsb_tonelsb = srrdata['lsb_tonelsb']
 
+    # compute power levels
+    pow_usb_toneusb = cd.scale_and_dBFS_specdata(usb_toneusb, acc_len, dBFS)
+    pow_usb_tonelsb = cd.scale_and_dBFS_specdata(usb_tonelsb, acc_len, dBFS)
+    pow_lsb_toneusb = cd.scale_and_dBFS_specdata(lsb_toneusb, acc_len, dBFS)
+    pow_lsb_tonelsb = cd.scale_and_dBFS_specdata(lsb_tonelsb, acc_len, dBFS)
+
     # compute ratios
     srr_usb = usb_toneusb / lsb_toneusb
     srr_lsb = lsb_tonelsb / usb_tonelsb
 
+    # plot power levels
+    plt.figure()
+    plt.plot(if_freqs, pow_usb_toneusb, 'b', label="USB toneUSB")
+    plt.plot(if_freqs, pow_usb_tonelsb, 'darkblue', label="USB toneLSB")
+    plt.plot(if_freqs, pow_lsb_tonelsb, 'r', label="LSB toneLSB")
+    plt.plot(if_freqs, pow_lsb_toneusb, 'darkred', label="LSB toneUSB")
+    plt.grid()                 
+    plt.xlabel('Frequency [MHz]')
+    plt.ylabel('Power [dBFS]')     
+    plt.legend()
+    plt.savefig(measdir+'/power_lev.pdf')
+    plt.close()
+            
     # print SRR
     plt.figure()
     plt.plot(if_freqs, 10*np.log10(srr_usb), 'b', label="USB")
@@ -298,13 +358,28 @@ def print_multilo_data():
     """
     Print the saved data from all LO settings to .pdf image.
     """
-    # create SRR figure
+    # create power level signal figure
     fig1, ax1 = plt.subplots(1,1)
     ax1.grid()                 
     ax1.set_xlabel('Frequency [MHz]')
-    ax1.set_ylabel('SRR [dB]')
+    ax1.set_ylabel('Power [dBFS]')
+
+    # create power level signal figure
+    fig2, ax2 = plt.subplots(1,1)
+    ax2.grid()                 
+    ax2.set_xlabel('Frequency [MHz]')
+    ax2.set_ylabel('Power [dBFS]')
     
-    for lo1_freq in lo1_freqs:
+    # create SRR figure
+    fig3, ax3 = plt.subplots(1,1)
+    ax3.grid()                 
+    ax3.set_xlabel('Frequency [MHz]')
+    ax3.set_ylabel('SRR [dB]')
+    
+    # get colors for plotting
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+    for lo1_freq, color in zip(lo1_freqs, colors):
         for lo2_freq in lo2_freqs:
             # get measurement subdirectory
             measname = "lo1_" + str(lo1_freq) + "ghz_lo2_" + \
@@ -321,17 +396,33 @@ def print_multilo_data():
             lsb_toneusb = srrdata['lsb_toneusb']
             usb_tonelsb = srrdata['usb_tonelsb']
             lsb_tonelsb = srrdata['lsb_tonelsb']
-        
+    
+            # compute power levels
+            pow_usb_toneusb = cd.scale_and_dBFS_specdata(usb_toneusb, acc_len, dBFS)
+            pow_usb_tonelsb = cd.scale_and_dBFS_specdata(usb_tonelsb, acc_len, dBFS)
+            pow_lsb_toneusb = cd.scale_and_dBFS_specdata(lsb_toneusb, acc_len, dBFS)
+            pow_lsb_tonelsb = cd.scale_and_dBFS_specdata(lsb_tonelsb, acc_len, dBFS)
+
             # compute SRR
             srr_usb = usb_toneusb / lsb_toneusb
             srr_lsb = lsb_tonelsb / usb_tonelsb
 
+            # plot power levels signal
+            ax1.plot(rf_freqs_usb, pow_usb_toneusb, color=color)
+            ax1.plot(rf_freqs_usb, pow_usb_tonelsb, color=color)
+
+            # plot power levels image
+            ax2.plot(rf_freqs_lsb, pow_lsb_tonelsb, color=color)
+            ax2.plot(rf_freqs_lsb, pow_lsb_toneusb, color=color)
+
             # plot SRR
-            ax1.plot(rf_freqs_usb, 10*np.log10(srr_usb), 'b')
-            ax1.plot(rf_freqs_lsb, 10*np.log10(srr_lsb), 'r')
+            ax3.plot(rf_freqs_usb, 10*np.log10(srr_usb), color=color)
+            ax3.plot(rf_freqs_lsb, 10*np.log10(srr_lsb), color=color)
             
     # print figures
-    fig1.savefig(srr_datadir+'/srr.pdf')
+    fig1.savefig(srr_datadir+'/power_lev_sig.pdf')
+    fig2.savefig(srr_datadir+'/power_lev_img.pdf')
+    fig3.savefig(srr_datadir+'/srr.pdf')
 
 def compress_data(datadir):
     """

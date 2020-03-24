@@ -66,10 +66,10 @@ bram_consts_lsb_im = ['bram_mult1_0_bram_im', 'bram_mult1_1_bram_im',
 #lo1_mult        = 18
 # band 8 parameters
 #lo1_freqs       = np.arange(385+20, 500, 16) # GHz
-lo1_freqs       = np.arange(400+20, 500, 100) # GHz
+lo1_freqs       = [420] # GHz
 lo1_mult        = 18
 #lo2_freqs       = np.arange(4, 20, 1) # GHz
-lo2_freqs       = np.arange(4, 20, 20) # GHz
+lo2_freqs       = [4] # GHz
 lo1_power       = 18 # dBm
 lo2_power       = 16 # dBm
 rf_mult         = 36
@@ -83,9 +83,9 @@ hotcold_datadir = "dss_hotcold " + date_time
 pause_time      = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in 
                       # order  for the spectra to be fully computed after a 
                       # tone change
-load_consts     = True
+load_consts     = False
 load_ideal      = False
-caltar          = 'dss_cal 2020-03-21 21:24:33.tar.gz'
+caltar          = 'dss_cal 2020-03-23 17:09:22.tar.gz'
 
 # derivative parameters
 nchannels     = 2**bram_addr_width * len(bram_a2)

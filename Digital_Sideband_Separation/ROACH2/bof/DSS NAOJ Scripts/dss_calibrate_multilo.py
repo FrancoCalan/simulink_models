@@ -3,7 +3,7 @@
 # multiple LO values and multiple LO stages.
 
 # imports
-import os, time, tarfile, shutil, json
+import os, time, tarfile, shutil, json, pyperclip
 import numpy as np
 import matplotlib.pyplot as plt
 import calandigital as cd
@@ -110,6 +110,9 @@ def make_post_measurements_actions():
     compress_data(cal_datadir)
     print("done")
 
+    # just a helper. Copy cal.datadir into the system paperclip
+    pyperclip.copy(cal_datadir + ".tar.gz")
+
 def create_figure():
     """
     Creates figure for plotting.
@@ -202,7 +205,7 @@ def make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb):
     print("done")
 
     print("Printing data...")
-    print_data(measdir)
+    print_singlelo_data(measdir)
     print("done")
 
 def get_caldata(measdir, rf_freqs, tone_sideband):
@@ -260,8 +263,12 @@ def get_caldata(measdir, rf_freqs, tone_sideband):
         fig.canvas.flush_events()
         
         # save data
-        np.savez(measdir+"/rawdata_tone_" + tone_sideband + "/chnl_" + str(chnl), 
+        rawdata_dir = measdir+"/rawdata_tone_" + tone_sideband
+        np.savez(rawdata_dir + "/chnl_" + str(chnl), 
             a2=a2, b2=b2, ab_re=ab_re, ab_im=ab_im)
+
+        # print raw spectral data
+        print_spec_data(rawdata_dir, chnl)
 
     # compute interpolations
     a2_arr = np.interp(if_freqs, if_test_freqs, a2_arr)
@@ -270,7 +277,44 @@ def get_caldata(measdir, rf_freqs, tone_sideband):
 
     return a2_arr, b2_arr, ab_arr
 
-def print_data(measdir):
+def print_spec_data(rawdata_dir, chnl):
+    """
+    Print the saved data to .pdf images for an easy check.
+    :param rawdata_dir: directory where to read the data and print the plot.
+    :param chnl: channel where the tone is injected.
+    """
+    # get data
+    specdata = np.load(rawdata_dir + "/chnl_" + str(chnl) + ".npz")
+    a2 = specdata['a2']
+    b2 = specdata['b2']
+
+    # compute power levels
+    pow_a2 = cd.scale_and_dBFS_specdata(a2, acc_len, dBFS)
+    pow_b2 = cd.scale_and_dBFS_specdata(b2, acc_len, dBFS)
+
+    # plot spec usb
+    plt.figure()
+    plt.plot(if_freqs, pow_a2, 'b')
+    plt.ylim((-85, 5))
+    plt.grid()                 
+    plt.xlabel('Frequency [MHz]')
+    plt.ylabel('Power [dBFS]')     
+    plt.legend()
+    plt.savefig(rawdata_dir+'/chnl_' + str(chnl) + '_a2.pdf')
+    plt.close()
+
+    # plot spec lsb
+    plt.figure()
+    plt.plot(if_freqs, pow_b2, 'r')
+    plt.ylim((-85, 5))
+    plt.grid()                 
+    plt.xlabel('Frequency [MHz]')
+    plt.ylabel('Power [dBFS]')     
+    plt.legend()
+    plt.savefig(rawdata_dir+'/chnl_' + str(chnl) + '_b2.pdf')
+    plt.close()
+
+def print_singlelo_data(measdir):
     """
     Print the saved data to .pdf images for an easy check.
     :param measdir: directory where to read the data of single measurement
@@ -283,8 +327,10 @@ def print_data(measdir):
     ab_toneusb = caldata['ab_toneusb']; ab_tonelsb = caldata['ab_tonelsb']
 
     # compute power levels
-    pow_usb = cd.scale_and_dBFS_specdata(a2_toneusb, acc_len, dBFS)
-    pow_lsb = cd.scale_and_dBFS_specdata(b2_tonelsb, acc_len, dBFS)
+    pow_a2_toneusb = cd.scale_and_dBFS_specdata(a2_toneusb, acc_len, dBFS)
+    pow_a2_tonelsb = cd.scale_and_dBFS_specdata(a2_tonelsb, acc_len, dBFS)
+    pow_b2_toneusb = cd.scale_and_dBFS_specdata(b2_toneusb, acc_len, dBFS)
+    pow_b2_tonelsb = cd.scale_and_dBFS_specdata(b2_tonelsb, acc_len, dBFS)
 
     # compute ratios
     ab_ratios_usb = np.conj(ab_toneusb) / a2_toneusb # (ab*)* /aa* = a*b / aa* = b/a
@@ -292,8 +338,10 @@ def print_data(measdir):
 
     # print power level
     plt.figure()
-    plt.plot(if_freqs, pow_usb, 'b', label="USB")
-    plt.plot(if_freqs, pow_lsb, 'r', label="LSB")
+    plt.plot(if_freqs, pow_a2_toneusb, 'b', label="USB toneUSB")
+    plt.plot(if_freqs, pow_a2_tonelsb, 'darkblue', label="USB toneLSB")
+    plt.plot(if_freqs, pow_b2_tonelsb, 'r', label="LSB toneLSB")
+    plt.plot(if_freqs, pow_b2_toneusb, 'darkred', label="LSB toneUSB")
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Power [dBFS]')
@@ -327,25 +375,34 @@ def print_multilo_data():
     """
     Print the saved data from all LO settings to .pdf image.
     """
-    # create power level figure
+    # create power level signal figure 
     fig1, ax1 = plt.subplots(1,1)
     ax1.grid()                 
     ax1.set_xlabel('Frequency [MHz]')
     ax1.set_ylabel('Power [dBFS]')
     
-    # create magnitude ratio figure
+    # create power level image figure 
     fig2, ax2 = plt.subplots(1,1)
     ax2.grid()                 
     ax2.set_xlabel('Frequency [MHz]')
-    ax2.set_ylabel('Mag ratio [lineal]')     
-
-    # create angle difference figure
+    ax2.set_ylabel('Power [dBFS]')
+    
+    # create magnitude ratio figure
     fig3, ax3 = plt.subplots(1,1)
     ax3.grid()                 
     ax3.set_xlabel('Frequency [MHz]')
-    ax3.set_ylabel('Angle diff [degrees]')     
+    ax3.set_ylabel('Mag ratio [lineal]')     
 
-    for lo1_freq in lo1_freqs:
+    # create angle difference figure
+    fig4, ax4 = plt.subplots(1,1)
+    ax4.grid()                 
+    ax4.set_xlabel('Frequency [MHz]')
+    ax4.set_ylabel('Angle diff [degrees]')     
+
+    # get colors for plotting
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+    for lo1_freq, color in zip(lo1_freqs, colors):
         for lo2_freq in lo2_freqs:
             # get measurement subdirectory
             measname = "lo1_" + str(lo1_freq) + "ghz_lo2_" + \
@@ -366,29 +423,36 @@ def print_multilo_data():
             ab_tonelsb = caldata['ab_tonelsb']
         
             # compute power levels
-            pow_usb = cd.scale_and_dBFS_specdata(a2_toneusb, acc_len, dBFS)
-            pow_lsb = cd.scale_and_dBFS_specdata(b2_tonelsb, acc_len, dBFS)
+            pow_a2_toneusb = cd.scale_and_dBFS_specdata(a2_toneusb, acc_len, dBFS)
+            pow_a2_tonelsb = cd.scale_and_dBFS_specdata(a2_tonelsb, acc_len, dBFS)
+            pow_b2_toneusb = cd.scale_and_dBFS_specdata(b2_toneusb, acc_len, dBFS)
+            pow_b2_tonelsb = cd.scale_and_dBFS_specdata(b2_tonelsb, acc_len, dBFS)
+
+            # plot power levels signal
+            ax1.plot(rf_freqs_usb, pow_a2_toneusb, color=color)
+            ax1.plot(rf_freqs_usb, pow_a2_tonelsb, color=color)
+            
+            # plot power levels image
+            ax2.plot(rf_freqs_lsb, pow_b2_tonelsb, color=color)
+            ax2.plot(rf_freqs_lsb, pow_b2_toneusb, color=color)
 
             # compute ratios
             ab_ratios_usb = np.conj(ab_toneusb) / a2_toneusb # (ab*)* /aa* = a*b / aa* = b/a
             ab_ratios_lsb = ab_tonelsb / b2_tonelsb # ab* / bb* = a/b
-        
-            # plot power levels
-            ax1.plot(rf_freqs_usb, pow_usb, 'b')
-            ax1.plot(rf_freqs_lsb, pow_lsb, 'r')
             
             # plot magnitude ratios
-            ax2.plot(rf_freqs_usb, np.abs(ab_ratios_usb), 'b')
-            ax2.plot(rf_freqs_lsb, np.abs(ab_ratios_lsb), 'r')
+            ax3.plot(rf_freqs_usb, np.abs(ab_ratios_usb), color=color)
+            ax3.plot(rf_freqs_lsb, np.abs(ab_ratios_lsb), color=color)
             
             # plot angle difference
-            ax3.plot(rf_freqs_usb, np.angle(ab_ratios_usb, deg=True), 'b')
-            ax3.plot(rf_freqs_lsb, np.angle(ab_ratios_lsb, deg=True), 'r')
+            ax4.plot(rf_freqs_usb, np.angle(ab_ratios_usb, deg=True), color=color)
+            ax4.plot(rf_freqs_lsb, np.angle(ab_ratios_lsb, deg=True), color=color)
 
     # print figures
-    fig1.savefig(cal_datadir+'/power_lev.pdf')
-    fig2.savefig(cal_datadir+'/mag_ratios.pdf')
-    fig3.savefig(cal_datadir+'/angle_diff.pdf')
+    fig1.savefig(cal_datadir+'/power_lev_sig.pdf')
+    fig2.savefig(cal_datadir+'/power_lev_img.pdf')
+    fig3.savefig(cal_datadir+'/mag_ratios.pdf')
+    fig4.savefig(cal_datadir+'/angle_diff.pdf')
 
 def compress_data(datadir):
     """
