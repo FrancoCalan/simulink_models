@@ -36,7 +36,8 @@ def make_pre_measurements_actions():
     chopper       = rm.open_resource(chopper_name)
 
     print("Setting up plotting and data saving elements...")
-    fig, lines = create_figure()
+    if show_plots:
+        fig, lines = create_figure()
     make_data_directory()
     print("done")
 
@@ -185,12 +186,13 @@ def make_dss_measurements(measdir):
     b2_hot_plot  = cd.scale_and_dBFS_specdata(b2_hot,  acc_len, dBFS)
 
     # plot data
-    lines[0].set_data(if_freqs, a2_cold_plot)
-    lines[1].set_data(if_freqs, b2_cold_plot)
-    lines[2].set_data(if_freqs, a2_hot_plot)
-    lines[3].set_data(if_freqs, b2_hot_plot)
-    fig.canvas.draw()
-    fig.canvas.flush_events()
+    if show_plots:
+        lines[0].set_data(if_freqs, a2_cold_plot)
+        lines[1].set_data(if_freqs, b2_cold_plot)
+        lines[2].set_data(if_freqs, a2_hot_plot)
+        lines[3].set_data(if_freqs, b2_hot_plot)
+        fig.canvas.draw()
+        fig.canvas.flush_events()
     
     print("Saving data...")
     np.savez(measdir+"/hotcold_data", 

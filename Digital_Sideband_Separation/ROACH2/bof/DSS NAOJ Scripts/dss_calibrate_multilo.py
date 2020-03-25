@@ -34,7 +34,8 @@ def make_pre_measurements_actions():
     rf_generator  = rm.open_resource(rf_generator_name)
 
     print("Setting up plotting and data saving elements...")
-    fig, lines = create_figure()
+    if show_plots:
+        fig, lines = create_figure()
     make_data_directory()
     print("done")
 
@@ -220,7 +221,8 @@ def get_caldata(measdir, rf_freqs, tone_sideband):
     :param tone_sideband: sideband of the injected test tone. Either USB or LSB
     :return: calibration data: a2, b2, and ab.
     """
-    fig.canvas.set_window_title(tone_sideband.upper() + " Tone Sweep")
+    if show_plots:
+        fig.canvas.set_window_title(tone_sideband.upper() + " Tone Sweep")
 
     a2_arr = []; b2_arr = []; ab_arr = []
     for i, chnl in enumerate(test_channels):
@@ -255,12 +257,13 @@ def get_caldata(measdir, rf_freqs, tone_sideband):
             ab_ratios = np.divide(ab_arr, b2_arr) # ab* / bb* = a/b
 
         # plot data
-        lines[0].set_data(if_freqs, a2_plot)
-        lines[1].set_data(if_freqs, b2_plot)
-        lines[2].set_data(if_test_freqs[:i+1], np.abs(ab_ratios))
-        lines[3].set_data(if_test_freqs[:i+1], np.angle(ab_ratios, deg=True))
-        fig.canvas.draw()
-        fig.canvas.flush_events()
+        if show_plots:
+            lines[0].set_data(if_freqs, a2_plot)
+            lines[1].set_data(if_freqs, b2_plot)
+            lines[2].set_data(if_test_freqs[:i+1], np.abs(ab_ratios))
+            lines[3].set_data(if_test_freqs[:i+1], np.angle(ab_ratios, deg=True))
+            fig.canvas.draw()
+            fig.canvas.flush_events()
         
         # save data
         rawdata_dir = measdir+"/rawdata_tone_" + tone_sideband

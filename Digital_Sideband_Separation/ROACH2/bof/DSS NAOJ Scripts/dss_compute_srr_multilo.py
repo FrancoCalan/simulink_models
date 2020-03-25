@@ -35,7 +35,8 @@ def make_pre_measurements_actions():
     rf_generator  = rm.open_resource(rf_generator_name)
 
     print("Setting up plotting and data saving elements...")
-    fig, lines = create_figure()
+    if show_plots:
+        fig, lines = create_figure()
     make_data_directory()
     print("done")
 
@@ -187,8 +188,10 @@ def make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb):
     """
     # loading calibration constants
     if load_consts:
+        print("Loading constants..."); load_time = time.time()
         caldir = os.path.basename(measdir)
-        dss_load_constants(roach, load_ideal, 0-1j, caltar, caldir+"/")
+        dss_load_constants(roach, caltar, caldir+"/")
+        print("done (" +str(int(time.time() - load_time)) + "[s])")
 
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
@@ -222,7 +225,8 @@ def get_srrdata(measdir, rf_freqs, tone_sideband):
     :param tone_sideband: sideband of the injected test tone. Either USB or LSB
     :return: srr data: usb and lsb.
     """
-    fig.canvas.set_window_title(tone_sideband.upper() + " Tone Sweep")
+    if show_plots:
+        fig.canvas.set_window_title(tone_sideband.upper() + " Tone Sweep")
 
     usb_arr = []; lsb_arr = []
     for i, chnl in enumerate(test_channels):
@@ -251,15 +255,16 @@ def get_srrdata(measdir, rf_freqs, tone_sideband):
         else: # tone_sideband=='lsb
             srr = np.divide(lsb_arr, usb_arr)
 
-        # define sb plot line
-        line_sb = lines[2] if tone_sideband=='usb' else lines[3]
+        if show_plots:
+            # define sb plot line
+            line_sb = lines[2] if tone_sideband=='usb' else lines[3]
 
         # plot data
-        lines[0].set_data(if_freqs, usb_plot)
-        lines[1].set_data(if_freqs, lsb_plot)
-        line_sb.set_data(if_test_freqs[:i+1], 10*np.log10(srr))
-        fig.canvas.draw()
-        fig.canvas.flush_events()
+            lines[0].set_data(if_freqs, usb_plot)
+            lines[1].set_data(if_freqs, lsb_plot)
+            line_sb.set_data(if_test_freqs[:i+1], 10*np.log10(srr))
+            fig.canvas.draw()
+            fig.canvas.flush_events()
         
         # save data
         rawdata_dir = measdir+"/rawdata_tone_" + tone_sideband
