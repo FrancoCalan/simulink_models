@@ -16,36 +16,31 @@ if __name__ == '__main__':
         help="Boffile to load into the FPGA.")
     parser.add_argument("-u", "--upload", dest="upload", action="store_true",
         help="If used, upload .bof from PC memory (ROACH2 only).")
-    parser.add_argument("-ct", "--caltar", dest="caltar",
-        help=".tar.gz file from where extract the calibration constants.")
     parser.add_argument("-cd", "--caldir", dest="caldir", default="",
-        help="Directory within the .tar.gz file where th constants are \
-        located. Must end in / if not empty.")
+        help="Directory with the calibration data.")
     args = parser.parse_args()
 
     roach = cd.initialize_roach(args.ip, boffile=args.boffile, upload=args.upload)
     bm_load_constants(roach, args.caltar, args.caldir)
 
-def dss_load_constants(roach, caltar="", caldir=""):
+def dss_load_constants(roach, caldir):
     """
     Load load digital sideband separation constants.
     :param roach: FpgaClient object to communicate with roach.
-    :param caltar: .tar.gz file with the calibration data.
-    :param caldir: directory with the calibration data within the tar file.
+    :param caldir: directory with the calibration data.
     """
-    consts_lsb, consts_usb = compute_consts(caltar, caldir)
+    consts_lsb, consts_usb = compute_consts(caldir)
 
     load_comp_constants(roach, consts_usb, bram_consts_usb_re, bram_consts_usb_im)
     load_comp_constants(roach, consts_lsb, bram_consts_lsb_re, bram_consts_lsb_im)
 
-def compute_consts(caltar, caldir):
+def compute_consts(caldir):
     """
     Compute constants using tone calibration info.
-    :param caltar: calibration .tar.gz file.
     :param caldir: calibration directory.
     :return: calibration constants.
     """
-    caldata = get_caldata(caltar, caldir)
+    caldata = np.load(caldir+'/caldata.npz')
     
     # get arrays
     a2_toneusb = caldata['a2_toneusb']; a2_tonelsb = caldata['a2_tonelsb']
@@ -58,15 +53,6 @@ def compute_consts(caltar, caldir):
     consts_lsb = -1 * np.conj(ab_toneusb) / a2_toneusb # (ab*)* / aa* = a*b / aa* = b/a
 
     return consts_lsb, consts_usb
-
-def get_caldata(datatar, datadir):
-    """
-    Extract calibration data from directory compressed as .tar.gz.
-    """
-    tar_file = tarfile.open(datatar)
-    caldata  = np.load(tar_file.extractfile(datadir+'caldata.npz'))
-
-    return caldata
 
 def load_comp_constants(roach, consts, bram_re, bram_im):
     """

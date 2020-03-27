@@ -81,7 +81,7 @@ def synchronize_adc5g():
         print("done (" +str(int(time.time() - sweep_time)) + "[s])")
 
         # get delays between adcs
-        delay = compute_adc_delay(if_test_freqs, ab_ratios, bandwidth)
+        delay = compute_adc_delay(if_sync_freqs, ab_ratios, bandwidth)
 
         # check adcs sync status, apply delay if necesary
         if delay == 0:
@@ -157,7 +157,7 @@ def get_caldata(rf_freqs):
     :return ab_ratios: complex ratios between a and b.
     """
     a2_arr = []; b2_arr = []; ab_arr = []
-    for i, chnl in enumerate(test_channels):
+    for i, chnl in enumerate(sync_channels):
         # set test tone
         freq = rf_freqs[chnl]
         rf_generator.ask("freq " + str(freq) + " ghz; *opc?")
@@ -188,8 +188,8 @@ def get_caldata(rf_freqs):
         # plot data
         lines[0].set_data(if_freqs, a2_plot)
         lines[1].set_data(if_freqs, b2_plot)
-        lines[2].set_data(if_test_freqs[:i+1], np.abs(ab_ratios))
-        lines[3].set_data(if_test_freqs[:i+1], np.angle(ab_ratios, deg=True))
+        lines[2].set_data(if_sync_freqs[:i+1], np.abs(ab_ratios))
+        lines[3].set_data(if_sync_freqs[:i+1], np.angle(ab_ratios, deg=True))
         fig.canvas.draw()
         fig.canvas.flush_events()
         

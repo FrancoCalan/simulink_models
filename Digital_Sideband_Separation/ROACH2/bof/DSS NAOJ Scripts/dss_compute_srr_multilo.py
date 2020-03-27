@@ -22,17 +22,23 @@ def main():
 def make_pre_measurements_actions():
     """
     Makes all the actions in preparation for the measurements:
+    - Extract calibration data.
     - initizalize ROACH and generator communications.
     - creating plotting and data saving elements
     - setting initial registers in FPGA
     - turning on generator power
     """
-    global roach, rf_generator, lo1_generator, lo2_generator, fig, lines
+    global roach, rf_generator, lo1_generator, lo2_generator, caldir, fig, lines
 
     roach = cd.initialize_roach(roach_ip)
     lo1_generator = rm.open_resource(lo1_generator_name)
     lo2_generator = rm.open_resource(lo2_generator_name)
     rf_generator  = rm.open_resource(rf_generator_name)
+
+    print("Extracting compressed calibration data...")
+    caldir = caltar[:-7]
+    tarfile.open(caltar).extractall(path=caldir)
+    print("done.")
 
     print("Setting up plotting and data saving elements...")
     if show_plots:
@@ -87,6 +93,12 @@ def make_dss_multilo_measurements():
             rf_freqs_usb = lo1_freq + lo2_freq + (if_freqs/1e3) # GHz
             rf_freqs_lsb = lo1_freq - lo2_freq - (if_freqs/1e3) # GHz
 
+            # loading calibration constants
+            if load_consts:
+                print("Loading constants..."); load_time = time.time()
+                dss_load_constants(roach, caldir + "/" + measname)
+                print("done (" +str(int(time.time() - load_time)) + "[s])")
+
             # make measurement
             make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb)
 
@@ -97,10 +109,12 @@ def make_post_measurements_actions():
     Makes all the actions required after measurements:
     - turn off sources
     - compress data
+    - remove calibration data
+    - write srr data name in file
     """
     print("Turning off instruments...")
-    lo1_generator.write("freq:mult 1")
-    rf_generator.write("freq:mult 1")
+    #lo1_generator.write("freq:mult 1")
+    #rf_generator.write("freq:mult 1")
     lo1_generator.write("outp off")
     lo2_generator.write("outp off")
     rf_generator.write("outp off")
@@ -111,8 +125,14 @@ def make_post_measurements_actions():
     compress_data(srr_datadir)
     print("done")
 
+    print("Removing calibration data...")
+    shutil.rmtree(caldir)
+    print("done")
+
     # Write file to save last srr directory
-    f = open("last_srrtar.txt", "w"); f.write(srr_datadir+".tar.gz"); f.close();
+    f = open("last_srrtar.txt", "w")
+    f.write(srr_datadir+".tar.gz")
+    f.close()
 
 def create_figure():
     """
@@ -172,7 +192,6 @@ def make_data_directory():
     testinfo["rf generator name"]  = rf_generator_name
     testinfo["rf power dbm"]       = rf_power
     testinfo["load consts"]        = load_consts
-    testinfo["load ideal"]         = load_ideal
     testinfo["caltar"]             = caltar
 
     with open(srr_datadir + "/testinfo.json", "w") as f:
@@ -186,13 +205,6 @@ def make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb):
     :param rf_freqs_usb: rf frequencies to measure in usb (GHz).
     :param rf_freqs_lsb: rf frequencies to measure in lsb (GHz).
     """
-    # loading calibration constants
-    if load_consts:
-        print("Loading constants..."); load_time = time.time()
-        caldir = os.path.basename(measdir)
-        dss_load_constants(roach, caltar, caldir+"/")
-        print("done (" +str(int(time.time() - load_time)) + "[s])")
-
     print("Starting tone sweep in upper sideband...")
     sweep_time = time.time()
     usb_toneusb, lsb_toneusb = get_srrdata(measdir, rf_freqs_usb, "usb")

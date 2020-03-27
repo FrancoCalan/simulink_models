@@ -97,10 +97,11 @@ def make_post_measurements_actions():
     Makes all the actions required after measurements:
     - turn off sources
     - compress data
+    - write calibration data name in file
     """
     print("Turning off instruments...")
-    lo1_generator.write("freq:mult 1")
-    rf_generator.write("freq:mult 1")
+    #lo1_generator.write("freq:mult 1")
+    #rf_generator.write("freq:mult 1")
     lo1_generator.write("outp off")
     lo2_generator.write("outp off")
     rf_generator.write("outp off")
@@ -112,7 +113,9 @@ def make_post_measurements_actions():
     print("done")
 
     # Write file to save last calibration directory
-    f = open("last_caltar.txt", "w"); f.write(cal_datadir+".tar.gz"); f.close();
+    f = open("last_caltar.txt", "w")
+    f.write(cal_datadir+".tar.gz")
+    f.close()
 
 def create_figure():
     """

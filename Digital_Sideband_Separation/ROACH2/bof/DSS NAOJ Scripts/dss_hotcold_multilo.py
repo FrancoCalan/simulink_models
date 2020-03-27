@@ -28,7 +28,7 @@ def make_pre_measurements_actions():
     - setting initial registers in FPGA
     - turning on generator power
     """
-    global roach, lo1_generator, lo2_generator, fig, lines
+    global roach, lo1_generator, lo2_generator, chopper, fig, lines
 
     roach = cd.initialize_roach(roach_ip)
     lo1_generator = rm.open_resource(lo1_generator_name)
@@ -56,6 +56,10 @@ def make_pre_measurements_actions():
     lo1_generator.write("outp on")
     lo2_generator.write("outp on")
     print("done")
+    
+    print("Initialize chopper...")
+    initialize_chopper()
+    print("done.")
 
 def make_dss_multilo_measurements():
     """
@@ -151,6 +155,22 @@ def make_data_directory():
     with open(hotcold_datadir + "/testinfo.json", "w") as f:
         json.dump(testinfo, f, indent=4, sort_keys=True)
 
+def initialize_chopper():
+    """
+    Send commands to initialize chooper. I acutally don't
+    know what most of these does. Just run them okay?
+    """
+    chopper.write("AC A110 13")
+    time.sleep(0.1)
+    chopper.write("AC A111 13")
+    time.sleep(0.1)
+    chopper.write("AC A112 5") 
+    time.sleep(0.1)
+    chopper.write("AC A113 8") 
+    time.sleep(0.1)
+    chopper.write("AC A114 125") # set 90 movement 
+    time.sleep(0.1)
+
 def make_dss_measurements(measdir):
     """
     Makes the hot cold measurements for dss for a single set of LOs.
@@ -158,10 +178,11 @@ def make_dss_measurements(measdir):
         (sub directory of main hotcold_datadir).
     """
     print("Setting setting chopper to cold...")
-    # TODO: set chopper to cold
+    move_chopper90_cw()
     print("done")
 
     print("Getting spectral data cold...")
+    time.sleep(pause_time)
     a2_cold = cd.read_interleave_data(roach, bram_a2,    bram_addr_width, 
                                       bram_word_width,   pow_data_type)
     b2_cold = cd.read_interleave_data(roach, bram_b2,    bram_addr_width, 
@@ -169,10 +190,11 @@ def make_dss_measurements(measdir):
     print("done")
         
     print("Setting setting chopper to cold...")
-    # TODO: set chopper to cold
+    move_chopper90_ccw()
     print("done")
 
     print("Getting spectral data hot...")
+    time.sleep(pause_time)
     a2_hot = cd.read_interleave_data(roach, bram_a2,    bram_addr_width, 
                                      bram_word_width,   pow_data_type)
     b2_hot = cd.read_interleave_data(roach, bram_b2,    bram_addr_width, 
@@ -280,6 +302,20 @@ def print_multilo_data():
             
     # print figures
     fig1.savefig(hotcold_datadir+'/power_lev.pdf')
+
+def move_chopper90_cw():
+    """
+    move chopper 90 degrees clockwise.
+    """
+    chopper.write("II +")
+    time.sleep(2)
+
+def move_chopper90_ccw():
+    """
+    move chopper 90 degrees counter clockwise.
+    """
+    chopper.write("II -")
+    time.sleep(2)
 
 def compress_data(datadir):
     """

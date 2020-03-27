@@ -12,8 +12,8 @@ lo1_generator_name = "GPIB0::20::INSTR"
 lo2_generator_name = "GPIB0::5::INSTR"
 rf_generator_name  = "GPIB0::11::INSTR"
 chopper_name       = "GPIB0::1::INSTR"
-#rm = pyvisa.ResourceManager('@py')
-rm = pyvisa.ResourceManager('@sim')
+rm = pyvisa.ResourceManager('@py')
+#rm = pyvisa.ResourceManager('@sim')
 
 # model parameters
 adc_bits           = 8
@@ -61,21 +61,22 @@ bram_consts_lsb_im = ['bram_mult1_0_bram_im', 'bram_mult1_1_bram_im',
 
 # experiment parameters
 # band 7 parameters
-#lo1_freqs       = np.arange(275+20, 373, 16) # GHz
-#lo1_freqs       = np.arange(275+20, 373, 100) # GHz
-#lo1_mult        = 18
+lo1_freqs       = np.linspace(275+20, 350, 5) # GHz
+#lo1_freqs       = [295] # GHz
+lo1_mult        = 9
 # band 8 parameters
 #lo1_freqs       = np.arange(385+20, 500, 16) # GHz
-lo1_freqs       = [437] # GHz
-lo1_mult        = 18
+#lo1_freqs       = [412] # GHz
+#lo1_mult        = 18
 lo2_freqs       = np.arange(4, 20, 1) # GHz
 #lo2_freqs       = [4] # GHz
 lo1_power       = 18 # dBm
 lo2_power       = 16 # dBm
-rf_mult         = 36
-rf_power        = 7 # dBm
+rf_mult         = 18
+rf_power        = 11 # dBm
 acc_len         = 2**16
-chnl_step       = 512
+chnl_step       = 32
+chnl_step_sync  = 32
 date_time       =  datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 cal_datadir     = "dss_cal "     + date_time
 srr_datadir     = "dss_srr "     + date_time
@@ -84,7 +85,6 @@ pause_time      = 0.5 # should be > (1/bandwidth * FFT_size * acc_len * 2) in
                       # order  for the spectra to be fully computed after a 
                       # tone change
 load_consts     = True
-load_ideal      = False
 #caltar          = 'dss_cal 2020-03-24 14:09:21.tar.gz'
 caltar          = open('last_caltar.txt', 'r').read().rstrip()
 show_plots      = False
@@ -93,5 +93,7 @@ show_plots      = False
 nchannels     = 2**bram_addr_width * len(bram_a2)
 if_freqs      = np.linspace(0, bandwidth, nchannels, endpoint=False) # MHz
 test_channels = range(1, nchannels, chnl_step)
+sync_channels = range(1, nchannels, chnl_step_sync)
 if_test_freqs = if_freqs[test_channels] # MHz
+if_sync_freqs = if_freqs[sync_channels] # MHz
 dBFS          = 6.02*adc_bits + 1.76 + 10*np.log10(nchannels)
