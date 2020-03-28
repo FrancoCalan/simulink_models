@@ -237,9 +237,6 @@ def get_srrdata(measdir, rf_freqs, tone_sideband):
     :param tone_sideband: sideband of the injected test tone. Either USB or LSB
     :return: srr data: usb and lsb.
     """
-    if show_plots:
-        fig.canvas.set_window_title(tone_sideband.upper() + " Tone Sweep")
-
     usb_arr = []; lsb_arr = []
     for i, chnl in enumerate(test_channels):
         # set test tone

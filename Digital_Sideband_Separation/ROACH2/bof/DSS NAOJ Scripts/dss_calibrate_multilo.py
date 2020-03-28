@@ -224,9 +224,6 @@ def get_caldata(measdir, rf_freqs, tone_sideband):
     :param tone_sideband: sideband of the injected test tone. Either USB or LSB
     :return: calibration data: a2, b2, and ab.
     """
-    if show_plots:
-        fig.canvas.set_window_title(tone_sideband.upper() + " Tone Sweep")
-
     a2_arr = []; b2_arr = []; ab_arr = []
     for i, chnl in enumerate(test_channels):
         # set test tone
