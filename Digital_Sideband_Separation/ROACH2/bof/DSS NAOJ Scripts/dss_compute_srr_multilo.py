@@ -97,7 +97,7 @@ def make_dss_multilo_measurements():
             if load_consts:
                 print("Loading constants..."); load_time = time.time()
                 dss_load_constants(roach, caldir + "/" + measname)
-                print("done (" +str(int(time.time() - load_time)) + "[s])")
+                print("done")
 
             # make measurement
             make_dss_measurements(measdir, rf_freqs_usb, rf_freqs_lsb)
@@ -358,8 +358,8 @@ def print_singlelo_data(measdir):
 
     # plot power level image
     plt.figure()
-    plt.plot(if_freqs, pow_usb_tonelsb, 'b', label="USB toneUSB")
-    plt.plot(if_freqs, pow_lsb_toneusb, 'r', label="LSB toneLSB")
+    plt.plot(if_freqs, pow_usb_tonelsb, 'b', label="USB toneLSB")
+    plt.plot(if_freqs, pow_lsb_toneusb, 'r', label="LSB toneUSB")
     plt.grid()                 
     plt.xlabel('Frequency [MHz]')
     plt.ylabel('Power [dBFS]')     
@@ -446,7 +446,7 @@ def print_multilo_data():
     # print figures
     fig1.savefig(srr_datadir+'/power_lev_sig.pdf')
     fig2.savefig(srr_datadir+'/power_lev_img.pdf')
-    fig3.savefig(srr_datadir+'/srr.pdf')
+    fig3.savefig(srr_datadir+'/srr_digital.pdf')
 
 def compress_data(datadir):
     """

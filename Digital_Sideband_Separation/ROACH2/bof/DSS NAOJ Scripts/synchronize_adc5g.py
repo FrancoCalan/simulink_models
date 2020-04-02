@@ -100,8 +100,8 @@ def make_post_measurements_actions():
     - turn off sources
     """
     print("Turning off instruments...")
-    lo1_generator.write("freq:mult 1")
-    rf_generator.write("freq:mult 1")
+    #lo1_generator.write("freq:mult 1")
+    #rf_generator.write("freq:mult 1")
     lo1_generator.write("outp off")
     lo2_generator.write("outp off")
     rf_generator.write("outp off")
