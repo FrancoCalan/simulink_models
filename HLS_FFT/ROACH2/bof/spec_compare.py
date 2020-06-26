@@ -1,7 +1,7 @@
 import corr, time
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation
 
 # parameters
 roachip   = "192.168.0.11"
@@ -11,7 +11,7 @@ fftsize   = 1024
 brams     = ["dout0", "dout"]
 dtypename = ">u8"
 
-freqs     = np.linspace(0, bandwidth, fftsize, endpint=False)
+freqs     = np.linspace(0, bandwidth, fftsize, endpoint=False)
 dBFS      = 6.02*8 + 1.76 + 10*np.log10(fftsize) # 8 bits
 dtype     = np.dtype(dtypename)
 
@@ -26,10 +26,10 @@ def main():
             data = read_data(roach, bram)
             data = process_data(data)
             line.set_data(freqs, data)
-        return data
+        return lines
 
     # create animation
-    ani = FuncAnimation(fig, animate, blit= True)
+    ani = FuncAnimation(fig, animate, blit=True)
     plt.show()
 
 def initialize_roach():
@@ -40,11 +40,11 @@ def initialize_roach():
     return roach
 
 def create_figure():
-    fig, axes = plt.subplot(1, 2, squeeze=False)
+    fig, axes = plt.subplots(1, 2)
     fig.set_tight_layout(True)
 
     lines = []
-    for ax in axes.flatten():
+    for ax in axes:
         ax.set_xlim(0, bandwidth)
         ax.set_ylim(-dBFS-2, 0)
         ax.set_xlabel("Frequency [MHz]")
@@ -54,15 +54,15 @@ def create_figure():
         line, = ax.plot([], [], animated=True)
         lines.append(line)
 
-    ax[0].set_title("Xilinx FFT")
-    ax[1].set_title("My FFT")
+    axes[0].set_title("Xilinx FFT")
+    axes[1].set_title("My FFT")
 
     return fig, lines
 
 def read_data(roach, bram):
     wordbytes = dtype.alignment
     rawdata = roach.read(bram, fftsize*wordbytes, 0)
-    bramdata = np.frombuffer(rawdata, dtype=dytype)
+    bramdata = np.frombuffer(rawdata, dtype=dtype)
 
     return bramdata
 
@@ -72,25 +72,28 @@ def process_data(data):
 
     # reorder data into canonical order
     for i in range(len(data)):
-        j = reverse_bits(i) # get the bit reverse version of i
+        j = reverse_bits(i, int(np.log2(fftsize)))
         if i < j:
-            temp = d[i]
-            d[i] = d[j]
-            d[j] = temp
+            temp    = data[i]
+            data[i] = data[j]
+            data[j] = temp
+    return data
 
 def reverse_bits(x, nbits):
     y = 0
     for _ in range(nbits):
         y = (y << 1) + (x & 1)
         x >>= 1
-    return y
+    return int(y)
 
 class DummyRoach():
     def __init__(self):
         pass
-    def read(bram, nbytes, offset):
-        data = 1024*np.ones(fftsize, dtype=dtype)
+    def read(self, bram, nbytes, offset):
+        #data = 1023*np.ones(fftsize, dtype=dtype)
         #data = np.arange(fftsize, dtype=dtype)
+        data = np.random.randint(0, 10000000, fftsize)
+        data = data.astype(dtype)
         return np.getbuffer(data)
 
 if __name__ == '__main__':
