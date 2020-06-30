@@ -10,14 +10,15 @@ bandwidth = 100 # MHz
 fftsize   = 1024
 brams     = ["dout0", "dout"]
 dtypename = ">u8"
+#dtypename = np.uint64
 
 freqs     = np.linspace(0, bandwidth, fftsize, endpoint=False)
 dBFS      = 6.02*8 + 1.76 + 10*np.log10(fftsize) # 8 bits
 dtype     = np.dtype(dtypename)
 
 def main():
-    #roach = initialize_roach()
-    roach = DummyRoach()
+    roach = initialize_roach()
+    #roach = DummyRoach()
     fig, lines = create_figure()
 
     # animation definition
@@ -90,11 +91,10 @@ class DummyRoach():
     def __init__(self):
         pass
     def read(self, bram, nbytes, offset):
-        #data = 1023*np.ones(fftsize, dtype=dtype)
+        #data = np.full(fftsize, 1023, dtype=dtype)
         #data = np.arange(fftsize, dtype=dtype)
-        data = np.random.randint(0, 10000000, fftsize)
-        data = data.astype(dtype)
-        return np.getbuffer(data)
+        data = np.random.randint(0, 10000000, fftsize, dtype=dtype)
+        return data.tobytes()
 
 if __name__ == '__main__':
     main()
