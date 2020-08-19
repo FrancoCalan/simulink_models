@@ -21,6 +21,7 @@ def main():
     roach.write_int(filter_gain_reg, filter_gain)
     roach.write_int(filter_acc_reg, filter_acc)
     roach.write_int(filter_chnl_reg, filter_chnl)
+    roach.write_int(filter_on_reg, 0)
     print("done")
     print("Resseting counter registers...")
     roach.write_int(cnt_rst_reg, 1)
@@ -34,6 +35,8 @@ def main():
     # animation function
     def animate(_):
         for line, specbrams in zip(lines, specbrams_list):
+            # update acc_len
+            acc_len = roach.read_uint(acc_len_reg)
             # get spectral data
             specdata = cd.read_interleave_data(roach, 
                 specbrams, spec_addr_width, spec_word_width, 
@@ -143,7 +146,7 @@ def add_reset_button(roach, button_frame):
     def reset():
         roach.write_int(cnt_rst_reg, 1)
         roach.write_int(cnt_rst_reg, 0)
-        print("ROACH reset")
+        print("reset ROACH")
     reset_button.config(command=reset)
     reset_button.pack(side=Tk.LEFT)
 
@@ -154,7 +157,7 @@ def add_filter_button(roach, button_frame):
     """
     filter_button = Tk.Button(button_frame, text="Filter off")
     def toggle_filter():
-        if roach.read_int(filter_on_reg) == 1:
+        if roach.read_uint(filter_on_reg) == 1:
             filter_button.config(relief=Tk.RAISED)
             filter_button.config(text="Filter off")
             roach.write_int(filter_on_reg, 0)
@@ -182,7 +185,7 @@ def add_reg_entry(roach, root, reg):
     label.pack(side=Tk.LEFT)
     # add entry
     entry = Tk.Entry(frame)
-    entry.insert(Tk.END, roach.read_int(reg))
+    entry.insert(Tk.END, roach.read_uint(reg))
     entry.pack(side=Tk.LEFT)
     def set_reg_from_entry():
         string_val = entry.get()
@@ -191,7 +194,7 @@ def add_reg_entry(roach, root, reg):
         except:
             raise Exception('Unable to parse value in textbox: ' 
                 + string_val)
-        print("Set value " + str(val) + " to reg " + reg)
+        print("Set reg " + reg + " to value " + str(val))
         roach.write_int(reg, val)
     entry.bind('<Return>', lambda x: set_reg_from_entry())
 
@@ -227,11 +230,12 @@ def plot_convergence(roach):
     chnl, max, mean = get_conv_data(roach)
     chnl = cd.scale_and_dBFS_specdata(chnl, 1, dBFS)
     max  = cd.scale_and_dBFS_specdata(max,  1, dBFS)
-    mean = cd.scale_and_dBFS_specdata(chnl, nspecs, dBFS)
+    mean = cd.scale_and_dBFS_specdata(mean, 1, dBFS)
 
     ax.plot(time, chnl, label="channel")
     ax.plot(time, max, label="max")
     ax.plot(time, mean, label="mean")
+    ax.legend()
 
 def add_conv_save_button(roach, button_frame):
     """

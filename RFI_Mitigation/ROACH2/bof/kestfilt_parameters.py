@@ -4,13 +4,13 @@
 import numpy as np
 
 # communication parameters
-#roach_ip   = '192.168.1.12'
-roach_ip   = None
+roach_ip   = '192.168.1.12'
+#roach_ip   = None
 #boffile    = 'kestfilt_4096ch_1080mhz.bof.gz'
 
 # model parameters
 adc_bits        = 8
-bandwidth       = 1080 # MHz
+bandwidth       = 540 # MHz
 acc_len_reg     = 'acc_len'
 cnt_rst_reg     = 'cnt_rst'
 filter_on_reg   = 'filter_on'
@@ -25,7 +25,7 @@ conv_word_width = 64 # bits
 conv_data_type  = '>u8'
 chnl_addr_width = 10 # bits
 chnl_word_width = 32 # bits
-chnl_data_type  = '>u4'
+chnl_data_type  = '>i4'
                   # primary signal
 specbrams_list = [['dout0_0', 'dout0_1', 'dout0_2', 'dout0_3', 
                    'dout0_4', 'dout0_5', 'dout0_6', 'dout0_7'],
@@ -42,8 +42,8 @@ bram_max  = 'dout_chnl_max'
 bram_mean = 'dout_chnl_mean'
 
 # experiment parameters
-acc_len     = 2**16
-filter_gain = 2**11
+acc_len     = 2**7
+filter_gain = 2**31
 filter_acc  = 2**0
 filter_chnl = 2**11
 
