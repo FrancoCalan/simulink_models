@@ -256,10 +256,12 @@ def get_conv_data(roach):
     chnl_imag = cd.read_data(roach, bram_chnl2[1], 
         chnl_addr_width, chnl_word_width, chnl_data_type)
     chnl = chnl_real**2 + chnl_imag**2
+    chnl *=2 # compensation for max/mean gain in simlink model
     max  = cd.read_data(roach, bram_max,  conv_addr_width,
         conv_word_width, conv_data_type)
     mean = cd.read_data(roach, bram_mean, conv_addr_width,
         conv_word_width, conv_data_type)
+    mean = mean / nchannels
     return chnl, max, mean
 
 def plot_stability(roach):
