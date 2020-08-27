@@ -7,7 +7,6 @@ calibrate_adc5g.py \
     --genfreq    10 \
     --genpow     -3 \
     --zdok0snaps adcsnap0 \
-    --zdok1snaps adcsnap1 \
     --do_mmcm \
     `#--do_ogp` \
     `#--do_inl` \
