@@ -15,5 +15,5 @@ calibrate_adc5g.py \
     --plot_snap \
     --plot_spec \
     --nsamples   200 \
-    --bandwidth  1080 \
+    --bandwidth  540 \
     --loaddir    adc5gcal\ 2020-01-09\ 15:31:42
