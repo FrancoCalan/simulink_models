@@ -5,8 +5,10 @@ from matplotlib.animation import FuncAnimation
 
 
 # communication parameters
+#roach_ip = '192.168.1.12'
 roach_ip = None
-boffile  = 'dss_2048ch_1520mhz.bof.gz'
+#boffile  = 'frbd_64ch_600mhz.bof.gz'
+boffile  = None
 
 # model parameters
 adc_bits  = 8
@@ -30,8 +32,8 @@ bram_data_type  = '>u4'
 # experiment parameters
 k     = 4.16e6 # formula constant [MHz^2*pc^-1*cm^3*ms]
 DMs   = range(0, 550, 50)
-ylim  = (-10,100)
-theta = 60
+ylim  = (30,80)
+theta = 70
 
 # derivative parameters
 flow    = fcenter - bandwidth/2 # MHz

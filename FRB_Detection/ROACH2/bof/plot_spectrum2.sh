@@ -1,13 +1,13 @@
 #!/bin/bash
 plot_spectra.py \
     --ip        192.168.1.12 \
-    `#--bof       detector_roach2_v2_2.bof.gz` \
+    `#--bof       frbd_64ch_600mhz.bof.gz` \
     --upload     \
-    --bramnames spec0 spec1 spec2 spec3 spec4 spec5 spec6 spec7 \
+    --bramnames spec0_0 spec0_1 spec0_2 spec0_3 \
     --nspecs    1 \
-    --addrwidth 3 \
-    --datawidth 64 \
-    --bandwidth 540 \
+    --addrwidth 4 \
+    --datawidth 32 \
+    --bandwidth 600 \
     --nbits     8 \
     --countreg  cnt_rst \
     --accreg    acc_len \
