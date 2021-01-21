@@ -12,7 +12,7 @@ calandigital'ed projects:
 - [ ] Million Channels Spectrometer
 - [x] Multi Beam Former
 - [x] Pocket Correlator
-- [ ] RFI Mitigation / ADC Frequency Calibration
+- [x] RFI Mitigation / ADC Frequency Calibration
 - [x] Snapshots
 - [x] Spectrometers
 - [x] Tests
